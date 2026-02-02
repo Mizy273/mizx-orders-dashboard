@@ -1,0 +1,547 @@
+<!doctype html>
+<html lang="ms">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Orders Pro UI (Editable)</title>
+
+  <style>
+    :root{
+      --bg:#0b1020;
+      --card:#111a33;
+      --text:#e6edf7;
+      --muted:#9aa7c2;
+      --border:rgba(255,255,255,.08);
+
+      --purple:#8b5cf6;
+      --purple-bg:rgba(139,92,246,.15);
+
+      --red:#ef4444;
+      --red-bg:rgba(239,68,68,.12);
+
+      --amber:#f59e0b;
+      --amber-bg:rgba(245,158,11,.14);
+
+      --green:#22c55e;
+      --green-bg:rgba(34,197,94,.14);
+    }
+
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:system-ui,Segoe UI,Roboto,Arial;
+      background: radial-gradient(900px 400px at 15% 0%, #182044 0%, var(--bg) 60%);
+      color:var(--text);
+    }
+
+    .wrap{max-width:1150px;margin:25px auto;padding:0 18px 40px}
+    h1{margin:0;font-size:20px;font-weight:800}
+    .sub{margin:6px 0 18px;color:var(--muted);font-size:13px}
+
+    .topbar{
+      display:flex;justify-content:space-between;align-items:center;
+      flex-wrap:wrap;gap:10px;margin-bottom:14px;
+    }
+
+    input,select,button{
+      border-radius:12px;
+      border:1px solid var(--border);
+      background:rgba(17,26,51,.8);
+      color:var(--text);
+      padding:10px 12px;
+      font-size:13px;
+      outline:none;
+    }
+
+    button{cursor:pointer;font-weight:750;transition:.15s}
+    button:hover{transform:scale(1.02)}
+    .btn-primary{background:var(--purple-bg);border-color:rgba(139,92,246,.35)}
+    .btn-danger{background:var(--red-bg);border-color:rgba(239,68,68,.35);color:#fecaca}
+    .btn-ghost{background:transparent}
+
+    table{
+      width:100%;
+      border-collapse:separate;border-spacing:0;
+      background:rgba(17,26,51,.6);
+      border:1px solid var(--border);
+      border-radius:18px;
+      overflow:hidden;
+    }
+    thead th{
+      padding:14px;
+      font-size:12px;
+      color:var(--muted);
+      text-align:left;
+      border-bottom:1px solid var(--border);
+      white-space:nowrap;
+    }
+    tbody td{
+      padding:14px;
+      border-bottom:1px solid var(--border);
+      font-size:13px;
+      vertical-align:middle;
+    }
+    tbody tr:last-child td{border-bottom:none}
+
+    .product{font-weight:750;color:#ff9b4a}
+    .qty{font-weight:800}
+
+    .badge{
+      padding:6px 10px;border-radius:999px;font-size:12px;
+      border:1px solid var(--border);
+      display:inline-flex;align-items:center;gap:6px;
+      white-space:nowrap;
+    }
+    .badge.purple{background:var(--purple-bg);border-color:rgba(139,92,246,.4)}
+    .badge.amber{background:var(--amber-bg);border-color:rgba(245,158,11,.45);color:#fde68a}
+    .badge.green{background:var(--green-bg);border-color:rgba(34,197,94,.45);color:#bbf7d0}
+    .badge.red{background:var(--red-bg);border-color:rgba(239,68,68,.45);color:#fecaca}
+
+    .row-overdue{background:rgba(239,68,68,.06)}
+
+    .stack{
+      display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;align-items:center;
+    }
+
+    .history{
+      margin-top:16px;padding:14px;border-radius:18px;border:1px solid var(--border);
+      background:rgba(17,26,51,.55);
+    }
+    .history h3{margin:0 0 8px;font-size:14px}
+    .log{font-size:12px;color:var(--muted);max-height:160px;overflow:auto;line-height:1.5}
+
+    .right{text-align:right}
+
+    /* Inline editor */
+    .cell-input{
+      width:100%;
+      min-width: 110px;
+      padding:8px 10px;
+      border-radius:12px;
+      border:1px solid var(--border);
+      background:rgba(10,14,30,.55);
+      color:var(--text);
+      font-size:13px;
+    }
+    .cell-input.small{min-width: 90px}
+    .cell-input.date{min-width: 140px}
+    .cell-input.qty{min-width: 90px}
+    .cell-actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+    .hint{color:var(--muted);font-size:12px;margin-top:10px}
+  </style>
+</head>
+
+<body>
+<div class="wrap">
+  <h1>Orders Dashboard (Editable)</h1>
+  <div class="sub">Klik <b>Edit</b> untuk ubah Order ID, Pack, Product, Qty, Due Date. Lepas tu Save.</div>
+
+  <div class="topbar">
+    <input id="search" placeholder="Search product / ID..." />
+    <select id="filter">
+      <option value="ALL">All Status</option>
+      <option value="IN_PRINT">In-Print</option>
+      <option value="READY">Ready To Pack</option>
+      <option value="PACKED">Packed</option>
+      <option value="DONE">Completed</option>
+    </select>
+
+    <button class="btn-primary" id="btnSeed">Load Sample Data</button>
+    <button class="btn-primary" id="btnExport">Export CSV</button>
+    <button class="btn-danger" id="btnClear">Clear All</button>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th style="width:110px">Order</th>
+        <th style="width:140px">Pack</th>
+        <th>Product</th>
+        <th style="width:110px">Qty</th>
+        <th style="width:160px">Due Date</th>
+        <th style="width:420px" class="right">Action</th>
+      </tr>
+    </thead>
+    <tbody id="tbody"></tbody>
+  </table>
+
+  <div class="hint">Note: Overdue = Due Date sudah lepas & status bukan Completed.</div>
+
+  <div class="history">
+    <h3>Status / Edit History Log</h3>
+    <div class="log" id="log"></div>
+  </div>
+</div>
+
+<script>
+  // ====== STORAGE ======
+  const STORE_KEY = "orders_editable_v1";
+
+  // ====== STATUS ======
+  const STATUS = { IN_PRINT:"IN_PRINT", READY:"READY", PACKED:"PACKED", DONE:"DONE" };
+  const statusLabel = { IN_PRINT:"In-Print", READY:"Ready To Pack", PACKED:"Packed", DONE:"Completed" };
+
+  // ====== STATE ======
+  let orders = loadOrders();
+  let logs = loadLogs();
+
+  // when editing, only one row at a time
+  let editingId = null;
+  let draft = null; // {id, pack, product, qty, due}
+
+  // ====== INIT DEFAULT IF EMPTY ======
+  if (!orders.length) {
+    orders = seedData();
+    saveOrders();
+  }
+
+  // ====== HELPERS ======
+  function seedData() {
+    return [
+      {id:71197,pack:"Tray Box",product:"HMG 7IU",qty:300,due:"2026-02-10",status:"IN_PRINT"},
+      {id:71196,pack:"Tray Box",product:"AICAR",qty:300,due:"2026-02-10",status:"IN_PRINT"},
+      {id:71121,pack:"Tray Box",product:"RETRA - PURE - (30MG)",qty:500,due:"2026-02-13",status:"IN_PRINT"},
+      {id:70886,pack:"Tray Box",product:"Ozempic Pure",qty:300,due:"2026-01-30",status:"READY"},
+      {id:70867,pack:"Tray Box",product:"EPITALON 10mg/vial",qty:300,due:"2026-01-30",status:"READY"},
+      {id:70604,pack:"Tray Box",product:"RETRA PURE (10MG)",qty:5000,due:"2026-02-27",status:"IN_PRINT"}
+    ];
+  }
+
+  function saveOrders(){ localStorage.setItem(STORE_KEY, JSON.stringify(orders)); }
+  function loadOrders(){
+    try { return JSON.parse(localStorage.getItem(STORE_KEY) || "[]"); }
+    catch { return []; }
+  }
+
+  function saveLogs(){ localStorage.setItem(STORE_KEY + "_logs", JSON.stringify(logs)); }
+  function loadLogs(){
+    try { return JSON.parse(localStorage.getItem(STORE_KEY + "_logs") || "[]"); }
+    catch { return []; }
+  }
+
+  function logAction(msg){
+    const time = new Date().toLocaleString();
+    logs.unshift(`[${time}] ${msg}`);
+    saveLogs();
+    renderLogs();
+  }
+
+  function renderLogs(){
+    document.getElementById("log").innerHTML = logs.slice(0,20).join("<br>");
+  }
+
+  function overdue(order){
+    if(order.status==="DONE") return false;
+    const dueT = new Date(order.due + "T00:00:00").getTime();
+    const nowT = new Date().setHours(0,0,0,0);
+    return dueT < nowT;
+  }
+
+  function badgeClass(status){
+    if(status==="IN_PRINT") return "purple";
+    if(status==="READY") return "amber";
+    if(status==="PACKED" || status==="DONE") return "green";
+    return "purple";
+  }
+
+  function escapeHtml(str){
+    return String(str)
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
+
+  function findOrder(id){
+    return orders.find(o => String(o.id) === String(id));
+  }
+
+  function orderIdExists(newId, excludeId){
+    return orders.some(o => String(o.id) === String(newId) && String(o.id) !== String(excludeId));
+  }
+
+  // ====== RENDER ======
+  function render(){
+    const tbody = document.getElementById("tbody");
+    tbody.innerHTML = "";
+
+    const q = document.getElementById("search").value.toLowerCase().trim();
+    const filter = document.getElementById("filter").value;
+
+    const list = orders.filter(o=>{
+      const matchQ =
+        o.product.toLowerCase().includes(q) ||
+        String(o.id).includes(q) ||
+        o.pack.toLowerCase().includes(q);
+
+      const matchS = filter==="ALL" ? true : o.status===filter;
+      return matchQ && matchS;
+    });
+
+    list.forEach(order=>{
+      const tr = document.createElement("tr");
+      if(overdue(order)) tr.classList.add("row-overdue");
+
+      const isEditing = editingId !== null && String(editingId) === String(order.id);
+
+      tr.innerHTML = isEditing ? renderEditRow(order) : renderViewRow(order);
+      tbody.appendChild(tr);
+    });
+
+    renderLogs();
+  }
+
+  function renderViewRow(order){
+    return `
+      <td>${escapeHtml(order.id)}</td>
+      <td>${escapeHtml(order.pack)}</td>
+      <td class="product">${escapeHtml(order.product)}</td>
+      <td class="qty">${Number(order.qty).toLocaleString()}</td>
+      <td>
+        ${escapeHtml(order.due)}
+        ${overdue(order) ? ` <span class="badge red">Overdue</span>` : ``}
+      </td>
+      <td class="right">
+        <div class="stack">
+          <span class="badge ${badgeClass(order.status)}">${statusLabel[order.status]}</span>
+
+          <button class="btn-primary" data-action="ready" data-id="${escapeHtml(order.id)}">
+            Ready To Pack
+          </button>
+
+          <select data-action="status" data-id="${escapeHtml(order.id)}">
+            ${Object.values(STATUS).map(s=>`
+              <option value="${s}" ${s===order.status ? "selected":""}>${statusLabel[s]}</option>
+            `).join("")}
+          </select>
+
+          <button class="btn-primary" data-action="edit" data-id="${escapeHtml(order.id)}">Edit</button>
+          <button class="btn-danger" data-action="delete" data-id="${escapeHtml(order.id)}">Delete</button>
+        </div>
+      </td>
+    `;
+  }
+
+  function renderEditRow(order){
+    // draft is already set when entering edit mode
+    const d = draft || { id: order.id, pack: order.pack, product: order.product, qty: order.qty, due: order.due };
+
+    return `
+      <td>
+        <input class="cell-input small" data-field="id" value="${escapeHtml(d.id)}" />
+      </td>
+      <td>
+        <select class="cell-input" data-field="pack">
+          ${["Tray Box","Bottle","Sachet","Box"].map(p=>`
+            <option value="${p}" ${p===d.pack?"selected":""}>${p}</option>
+          `).join("")}
+        </select>
+      </td>
+      <td>
+        <input class="cell-input" data-field="product" value="${escapeHtml(d.product)}" />
+      </td>
+      <td>
+        <input class="cell-input qty" type="number" min="1" step="1" data-field="qty" value="${escapeHtml(d.qty)}" />
+      </td>
+      <td>
+        <input class="cell-input date" type="date" data-field="due" value="${escapeHtml(d.due)}" />
+        ${overdue(order) ? ` <span class="badge red">Overdue</span>` : ``}
+      </td>
+      <td class="right">
+        <div class="cell-actions">
+          <button class="btn-primary" data-action="save" data-id="${escapeHtml(order.id)}">Save</button>
+          <button class="btn-ghost" data-action="cancel" data-id="${escapeHtml(order.id)}">Cancel</button>
+          <span class="badge ${badgeClass(order.status)}">${statusLabel[order.status]}</span>
+          <select data-action="status" data-id="${escapeHtml(order.id)}">
+            ${Object.values(STATUS).map(s=>`
+              <option value="${s}" ${s===order.status ? "selected":""}>${statusLabel[s]}</option>
+            `).join("")}
+          </select>
+        </div>
+      </td>
+    `;
+  }
+
+  // ====== ACTIONS ======
+  function startEdit(id){
+    if (editingId !== null && String(editingId) !== String(id)) {
+      alert("Satu masa hanya boleh edit satu row. Save/Cancel dulu.");
+      return;
+    }
+    const order = findOrder(id);
+    if (!order) return;
+    editingId = order.id;
+    draft = { id: order.id, pack: order.pack, product: order.product, qty: order.qty, due: order.due };
+    logAction(`Edit mode ON for Order ${order.id}`);
+    render();
+  }
+
+  function cancelEdit(){
+    if (editingId !== null) logAction(`Edit cancelled for Order ${editingId}`);
+    editingId = null;
+    draft = null;
+    render();
+  }
+
+  function saveEdit(originalId, rowEl){
+    const order = findOrder(originalId);
+    if (!order) return;
+
+    // read fields from row inputs
+    const idVal = rowEl.querySelector('[data-field="id"]').value.trim();
+    const packVal = rowEl.querySelector('[data-field="pack"]').value;
+    const productVal = rowEl.querySelector('[data-field="product"]').value.trim();
+    const qtyVal = Number(rowEl.querySelector('[data-field="qty"]').value);
+    const dueVal = rowEl.querySelector('[data-field="due"]').value;
+
+    if (!idVal) return alert("Order ID tak boleh kosong");
+    if (!productVal) return alert("Product tak boleh kosong");
+    if (!qtyVal || qtyVal <= 0) return alert("Qty mesti > 0");
+    if (!dueVal) return alert("Due Date wajib isi");
+
+    if (orderIdExists(idVal, originalId)) {
+      return alert("Order ID dah wujud. Sila guna ID lain.");
+    }
+
+    const before = { ...order };
+    order.id = idVal;          // allow change id
+    order.pack = packVal;
+    order.product = productVal;
+    order.qty = qtyVal;
+    order.due = dueVal;
+
+    // if id changed, keep row key consistent by re-rendering; also update editingId
+    editingId = null;
+    draft = null;
+
+    // if id changed, reorder could be kept same; we just saved.
+    saveOrders();
+    logAction(`Order ${before.id} updated → ID:${order.id}, Pack:${order.pack}, Product:${order.product}, Qty:${order.qty}, Due:${order.due}`);
+    render();
+  }
+
+  function updateStatus(id,newStatus){
+    const order = findOrder(id);
+    if(!order) return;
+
+    if(!confirm(`Update Order ${order.id} → ${statusLabel[newStatus]} ?`)) return;
+    order.status=newStatus;
+
+    saveOrders();
+    logAction(`Order ${order.id} status changed to ${statusLabel[newStatus]}`);
+    render();
+  }
+
+  function deleteOrder(id){
+    const order = findOrder(id);
+    if(!order) return;
+
+    if(!confirm(`Delete order ${order.id}?`)) return;
+    orders = orders.filter(o=> String(o.id) !== String(id));
+
+    // if deleting edited row
+    if (editingId !== null && String(editingId) === String(id)) {
+      editingId = null;
+      draft = null;
+    }
+
+    saveOrders();
+    logAction(`Order ${order.id} deleted`);
+    render();
+  }
+
+  // ====== EVENTS ======
+  document.getElementById("search").addEventListener("input", render);
+  document.getElementById("filter").addEventListener("change", render);
+
+  document.getElementById("btnSeed").addEventListener("click", ()=>{
+    if(!confirm("Replace current data dengan sample?")) return;
+    orders = seedData();
+    saveOrders();
+    logs = [];
+    saveLogs();
+    logAction("Sample data loaded");
+    render();
+  });
+
+  document.getElementById("btnClear").addEventListener("click", ()=>{
+    if(!confirm("Clear semua orders?")) return;
+    orders = [];
+    editingId = null;
+    draft = null;
+    saveOrders();
+    logAction("All orders cleared");
+    render();
+  });
+
+  document.getElementById("btnExport").addEventListener("click", ()=>{
+    let csv = "ID,Pack,Product,Qty,Due,Status\n";
+    orders.forEach(o=>{
+      const line = [
+        `"${String(o.id).replaceAll('"','""')}"`,
+        `"${String(o.pack).replaceAll('"','""')}"`,
+        `"${String(o.product).replaceAll('"','""')}"`,
+        `${Number(o.qty)}`,
+        `"${o.due}"`,
+        `"${statusLabel[o.status]}"`
+      ].join(",");
+      csv += line + "\n";
+    });
+
+    const blob = new Blob([csv], {type:"text/csv"});
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "orders.csv";
+    link.click();
+  });
+
+  // Event delegation on table
+  document.getElementById("tbody").addEventListener("click", (e)=>{
+    const el = e.target;
+    const action = el?.dataset?.action;
+    const id = el?.dataset?.id;
+
+    if(!action) return;
+
+    if(action === "edit") startEdit(id);
+    if(action === "cancel") cancelEdit();
+    if(action === "delete") deleteOrder(id);
+    if(action === "ready") updateStatus(id, STATUS.READY);
+
+    if(action === "save"){
+      const row = el.closest("tr");
+      saveEdit(id, row);
+    }
+  });
+
+  document.getElementById("tbody").addEventListener("change", (e)=>{
+    const el = e.target;
+    const action = el?.dataset?.action;
+    const id = el?.dataset?.id;
+
+    // status dropdown
+    if (action === "status") {
+      updateStatus(id, el.value);
+      return;
+    }
+
+    // keep draft in sync while typing (optional)
+    if (editingId !== null) {
+      const row = el.closest("tr");
+      if(!row) return;
+      const idVal = row.querySelector('[data-field="id"]')?.value?.trim();
+      const packVal = row.querySelector('[data-field="pack"]')?.value;
+      const productVal = row.querySelector('[data-field="product"]')?.value?.trim();
+      const qtyVal = row.querySelector('[data-field="qty"]')?.value;
+      const dueVal = row.querySelector('[data-field="due"]')?.value;
+
+      draft = { id: idVal, pack: packVal, product: productVal, qty: qtyVal, due: dueVal };
+    }
+  });
+
+  // ====== FIRST RENDER ======
+  render();
+</script>
+</body>
+</html>
