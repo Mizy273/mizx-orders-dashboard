@@ -1,8 +1,8 @@
-<!doctype html>
-<html lang="ms">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<!DOCTYPE html>
+<!-- saved from url=(0058)file:///C:/Users/Tarmizi/Downloads/New%20folder/index.html -->
+<html lang="ms"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Orders Pro Custom Box Mizxartstudio</title>
 
   <style>
@@ -107,7 +107,7 @@
       margin-top:16px;padding:14px;border-radius:18px;border:1px solid var(--border);
       background:rgba(17,26,51,.55);
     }
-    .history h3{margin:0 0 8px;font-size:14px}
+    .history h3{margin:0;font-size:14px}
     .log{font-size:12px;color:var(--muted);max-height:160px;overflow:auto;line-height:1.5}
 
     .right{text-align:right}
@@ -128,6 +128,28 @@
     .cell-input.qty{min-width: 90px}
     .cell-actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
     .hint{color:var(--muted);font-size:12px;margin-top:10px}
+
+    /* Add New Order panel */
+    .panel{
+      margin:14px 0 12px;
+      padding:14px;
+      border-radius:18px;
+      border:1px solid var(--border);
+      background:rgba(17,26,51,.55);
+    }
+    .panel h3{margin:0 0 10px;font-size:14px}
+    .grid{
+      display:grid;
+      grid-template-columns: 1.2fr 1.2fr 1.4fr .8fr 1fr 1fr;
+      gap:10px;
+      align-items:end;
+    }
+    @media (max-width: 980px){
+      .grid{grid-template-columns: 1fr 1fr}
+    }
+    .field{display:flex;flex-direction:column;gap:6px}
+    .label{font-size:12px;color:var(--muted);font-weight:700}
+    .actions-row{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;margin-top:10px}
   </style>
 </head>
 
@@ -137,7 +159,7 @@
   <div class="sub">Order more , Pay less . Simple math .</div>
 
   <div class="topbar">
-    <input id="search" placeholder="Search product / ID..." />
+    <input id="search" placeholder="Search product / ID...">
     <select id="filter">
       <option value="ALL">All Status</option>
       <option value="IN_PRINT">In-Print</option>
@@ -151,6 +173,59 @@
     <button class="btn-danger" id="btnClear">Clear All</button>
   </div>
 
+  <!-- ADD NEW ORDER -->
+  <div class="panel">
+    <h3>Add New Order</h3>
+    <div class="grid">
+      <div class="field">
+        <div class="label">Order ID (number)</div>
+        <input id="newId" type="number" min="1" step="1" placeholder="cth: 71234">
+      </div>
+
+      <div class="field">
+        <div class="label">Pack</div>
+        <select id="newPack">
+          <option value="Tray Box">Tray Box</option>
+          <option value="Bottle">Bottle</option>
+          <option value="Sachet">Sachet</option>
+          <option value="Box">Box</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <div class="label">Product</div>
+        <input id="newProduct" placeholder="cth: HMG 7IU">
+      </div>
+
+      <div class="field">
+        <div class="label">Qty</div>
+        <input id="newQty" type="number" min="1" step="1" placeholder="cth: 300">
+      </div>
+
+      <div class="field">
+        <div class="label">Due Date</div>
+        <input id="newDue" type="date">
+      </div>
+
+      <div class="field">
+        <div class="label">Status</div>
+        <select id="newStatus">
+          <option value="IN_PRINT">In-Print</option>
+          <option value="READY">Ready To Pack</option>
+          <option value="PACKED">Packed</option>
+          <option value="DONE">Completed</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="actions-row">
+      <button class="btn-ghost" id="btnNewClear">Clear Form</button>
+      <button class="btn-primary" id="btnAddOrder">➕ Add Order</button>
+    </div>
+
+    <div class="hint">Tip: Order ID mesti unique (tak boleh sama). Kalau kosong, dia auto-generate ID baru.</div>
+  </div>
+
   <table>
     <thead>
       <tr>
@@ -162,14 +237,48 @@
         <th style="width:420px" class="right">Action</th>
       </tr>
     </thead>
-    <tbody id="tbody"></tbody>
+    <tbody id="tbody"><tr>
+      <td>71197</td>
+      <td>Tray Box</td>
+      <td class="product">HMG 7IU</td>
+      <td class="qty">300</td>
+      <td>
+        2026-02-10
+        
+      </td>
+      <td class="right">
+        <div class="stack">
+          <span class="badge purple">In-Print</span>
+
+          <!-- READY TO PACK button REMOVED (as requested) -->
+
+          <select data-action="status" data-id="71197">
+            
+              <option value="IN_PRINT" selected="">In-Print</option>
+            
+              <option value="READY">Ready To Pack</option>
+            
+              <option value="PACKED">Packed</option>
+            
+              <option value="DONE">Completed</option>
+            
+          </select>
+
+          <button class="btn-primary" data-action="edit" data-id="71197">Edit</button>
+          <button class="btn-danger" data-action="delete" data-id="71197">Delete</button>
+        </div>
+      </td>
+    </tr></tbody>
   </table>
 
-  <div class="hint">Note: Overdue = Due Date sudah lepas & status bukan Completed.</div>
+  <div class="hint">Note: Overdue = Due Date sudah lepas &amp; status bukan Completed.</div>
 
   <div class="history">
-    <h3>Status / Edit History Log</h3>
-    <div class="log" id="log"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+      <h3>Status / Edit History Log</h3>
+      <button class="btn-danger" id="btnClearLog">Clear Log</button>
+    </div>
+    <div class="log" id="log">[02/02/2026, 16:37:07] Order 70604 deleted<br>[02/02/2026, 16:37:06] Order 70867 deleted<br>[02/02/2026, 16:37:04] Order 70886 deleted<br>[02/02/2026, 16:37:03] Order 71121 deleted<br>[02/02/2026, 16:37:01] Order 71196 deleted</div>
   </div>
 </div>
 
@@ -227,7 +336,12 @@
   }
 
   function renderLogs(){
-    document.getElementById("log").innerHTML = logs.slice(0,20).join("<br>");
+    const el = document.getElementById("log");
+    if(!logs.length){
+      el.innerHTML = `<span style="color:rgba(154,167,194,.85)">No history yet.</span>`;
+      return;
+    }
+    el.innerHTML = logs.slice(0,20).map(x=>escapeHtml(x)).join("<br>");
   }
 
   function overdue(order){
@@ -261,6 +375,25 @@
     return orders.some(o => String(o.id) === String(newId) && String(o.id) !== String(excludeId));
   }
 
+  function nextOrderId(){
+    const maxId = orders.reduce((m,o)=>Math.max(m, Number(o.id)||0), 70000);
+    return maxId + 1;
+  }
+
+  function normalizeDateInput(val){
+    // expects yyyy-mm-dd, return same
+    return (val || "").trim();
+  }
+
+  function clearNewOrderForm(){
+    document.getElementById("newId").value = "";
+    document.getElementById("newPack").value = "Tray Box";
+    document.getElementById("newProduct").value = "";
+    document.getElementById("newQty").value = "";
+    document.getElementById("newDue").value = "";
+    document.getElementById("newStatus").value = STATUS.IN_PRINT;
+  }
+
   // ====== RENDER ======
   function render(){
     const tbody = document.getElementById("tbody");
@@ -284,7 +417,6 @@
       if(overdue(order)) tr.classList.add("row-overdue");
 
       const isEditing = editingId !== null && String(editingId) === String(order.id);
-
       tr.innerHTML = isEditing ? renderEditRow(order) : renderViewRow(order);
       tbody.appendChild(tr);
     });
@@ -306,9 +438,7 @@
         <div class="stack">
           <span class="badge ${badgeClass(order.status)}">${statusLabel[order.status]}</span>
 
-          <button class="btn-primary" data-action="ready" data-id="${escapeHtml(order.id)}">
-            Ready To Pack
-          </button>
+          <!-- READY TO PACK button REMOVED (as requested) -->
 
           <select data-action="status" data-id="${escapeHtml(order.id)}">
             ${Object.values(STATUS).map(s=>`
@@ -324,7 +454,6 @@
   }
 
   function renderEditRow(order){
-    // draft is already set when entering edit mode
     const d = draft || { id: order.id, pack: order.pack, product: order.product, qty: order.qty, due: order.due };
 
     return `
@@ -388,7 +517,6 @@
     const order = findOrder(originalId);
     if (!order) return;
 
-    // read fields from row inputs
     const idVal = rowEl.querySelector('[data-field="id"]').value.trim();
     const packVal = rowEl.querySelector('[data-field="pack"]').value;
     const productVal = rowEl.querySelector('[data-field="product"]').value.trim();
@@ -405,17 +533,15 @@
     }
 
     const before = { ...order };
-    order.id = idVal;          // allow change id
+    order.id = idVal;
     order.pack = packVal;
     order.product = productVal;
     order.qty = qtyVal;
     order.due = dueVal;
 
-    // if id changed, keep row key consistent by re-rendering; also update editingId
     editingId = null;
     draft = null;
 
-    // if id changed, reorder could be kept same; we just saved.
     saveOrders();
     logAction(`Order ${before.id} updated → ID:${order.id}, Pack:${order.pack}, Product:${order.product}, Qty:${order.qty}, Due:${order.due}`);
     render();
@@ -440,7 +566,6 @@
     if(!confirm(`Delete order ${order.id}?`)) return;
     orders = orders.filter(o=> String(o.id) !== String(id));
 
-    // if deleting edited row
     if (editingId !== null && String(editingId) === String(id)) {
       editingId = null;
       draft = null;
@@ -448,6 +573,46 @@
 
     saveOrders();
     logAction(`Order ${order.id} deleted`);
+    render();
+  }
+
+  function addNewOrder(){
+    if(editingId !== null){
+      alert("Tengah edit row. Save/Cancel dulu sebelum add order baru.");
+      return;
+    }
+
+    const idInput = document.getElementById("newId").value.trim();
+    const pack = document.getElementById("newPack").value;
+    const product = document.getElementById("newProduct").value.trim();
+    const qty = Number(document.getElementById("newQty").value);
+    const due = normalizeDateInput(document.getElementById("newDue").value);
+    const status = document.getElementById("newStatus").value;
+
+    if(!product) return alert("Product wajib isi");
+    if(!qty || qty <= 0) return alert("Qty mesti > 0");
+    if(!due) return alert("Due Date wajib isi");
+
+    let idVal = idInput ? String(Number(idInput)) : String(nextOrderId());
+    if(!idVal || idVal === "NaN") idVal = String(nextOrderId());
+
+    if(orderIdExists(idVal, null)){
+      return alert("Order ID dah wujud. Sila guna ID lain.");
+    }
+
+    const order = {
+      id: idVal,
+      pack,
+      product,
+      qty,
+      due,
+      status
+    };
+
+    orders.unshift(order);
+    saveOrders();
+    logAction(`New order added → ID:${order.id}, Pack:${order.pack}, Product:${order.product}, Qty:${order.qty}, Due:${order.due}, Status:${statusLabel[order.status]}`);
+    clearNewOrderForm();
     render();
   }
 
@@ -473,6 +638,23 @@
     saveOrders();
     logAction("All orders cleared");
     render();
+  });
+
+  document.getElementById("btnClearLog").addEventListener("click", ()=>{
+    if(!confirm("Clear history log?")) return;
+    logs = [];
+    saveLogs();
+    renderLogs();
+  });
+
+  document.getElementById("btnAddOrder").addEventListener("click", addNewOrder);
+  document.getElementById("btnNewClear").addEventListener("click", clearNewOrderForm);
+
+  // Enter key to add (from form inputs)
+  ["newId","newProduct","newQty","newDue"].forEach(id=>{
+    document.getElementById(id).addEventListener("keydown", (e)=>{
+      if(e.key === "Enter") addNewOrder();
+    });
   });
 
   document.getElementById("btnExport").addEventListener("click", ()=>{
@@ -507,7 +689,6 @@
     if(action === "edit") startEdit(id);
     if(action === "cancel") cancelEdit();
     if(action === "delete") deleteOrder(id);
-    if(action === "ready") updateStatus(id, STATUS.READY);
 
     if(action === "save"){
       const row = el.closest("tr");
@@ -520,7 +701,6 @@
     const action = el?.dataset?.action;
     const id = el?.dataset?.id;
 
-    // status dropdown
     if (action === "status") {
       updateStatus(id, el.value);
       return;
@@ -541,9 +721,10 @@
   });
 
   // ====== FIRST RENDER ======
+  // set default due date (today) for add form
+  document.getElementById("newStatus").value = STATUS.IN_PRINT;
   render();
 </script>
-</body>
-</html>
 
 
+</body></html>
