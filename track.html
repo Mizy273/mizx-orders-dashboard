@@ -1,55 +1,87 @@
 <!DOCTYPE html>
-<html>
+<html lang="ms">
 <head>
-  <title>Track Order Mizxart</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Track Your Order</title>
   <style>
-    body {
-      font-family: Arial;
-      background:#0b1020;
-      color:white;
-      display:flex;
-      justify-content:center;
-      align-items:center;
-      height:100vh;
+    :root{
+      --bg:#0b1020; --card:#111a33; --text:#e6edf7; --muted:#9aa7c2;
+      --border:rgba(255,255,255,.08);
+      --purple-bg:rgba(139,92,246,.15);
+      --purple:#8b5cf6;
     }
-    .card {
-      background:#111a33;
-      padding:30px;
-      border-radius:20px;
-      width:400px;
-      text-align:center;
+    *{box-sizing:border-box}
+    body{
+      margin:0;font-family:system-ui,Segoe UI,Roboto,Arial;color:var(--text);
+      background: radial-gradient(900px 400px at 15% 0%, #182044 0%, var(--bg) 60%);
+      min-height:100vh; display:flex; align-items:center; justify-content:center;
+      padding:20px;
     }
-    input,button {
+    .card{
+      width:min(520px, 95vw);
+      border:1px solid var(--border);
+      background:rgba(17,26,51,.55);
+      border-radius:22px;
+      padding:22px;
+      box-shadow:0 10px 35px rgba(0,0,0,.25);
+    }
+    h1{margin:0;font-size:22px;font-weight:900;text-align:center}
+    .sub{margin:8px 0 16px;text-align:center;color:var(--muted);font-size:13px}
+    input,button{
       width:100%;
-      padding:12px;
+      border-radius:14px;border:1px solid var(--border);
+      background:rgba(17,26,51,.8);color:var(--text);
+      padding:12px 14px;font-size:14px;outline:none;
+    }
+    button{
       margin-top:10px;
-      border-radius:10px;
-      border:none;
+      cursor:pointer;font-weight:900;
+      background:var(--purple-bg);
+      border-color:rgba(139,92,246,.35);
     }
-    button {
-      background:#8b5cf6;
-      color:white;
-      font-weight:bold;
-      cursor:pointer;
+    .result{
+      margin-top:16px;
+      padding:16px;
+      border-radius:18px;
+      border:1px solid var(--border);
+      background:rgba(10,14,30,.45);
     }
-    .result {
-      margin-top:20px;
-      padding:15px;
-      background:#182044;
-      border-radius:15px;
+    .row{display:flex;gap:10px;flex-wrap:wrap;justify-content:space-between}
+    .k{color:var(--muted);font-weight:800;font-size:12px}
+    .v{font-weight:850}
+    .badge{
+      display:inline-flex;align-items:center;gap:6px;
+      padding:6px 10px;border-radius:999px;
+      border:1px solid rgba(139,92,246,.35);
+      background:rgba(139,92,246,.15);
+      font-size:12px;font-weight:900;
+      margin-top:10px;
     }
+    .err{color:#fecaca;margin-top:10px;font-size:13px}
   </style>
 </head>
 <body>
 
 <div class="card">
-  <h2>Track Your Order</h2>
-  <p>Masukkan Order ID untuk semak status</p>
+  <h1>Track Your Order</h1>
+  <div class="sub">Masukkan Order ID untuk semak status order anda.</div>
 
-  <input id="searchId" placeholder="Contoh: 999">
-  <button onclick="trackOrder()">Track Order</button>
+  <input id="orderId" placeholder="cth: 12345 / TEST 1" />
+  <button id="btnTrack">Track Order</button>
 
-  <div id="output"></div>
+  <div id="error" class="err"></div>
+
+  <div id="box" class="result" style="display:none">
+    <h2 style="margin:0 0 12px;font-size:18px;font-weight:900">Order <span id="oid"></span></h2>
+
+    <div class="row"><div><div class="k">Pack</div><div class="v" id="pack"></div></div></div><br/>
+    <div class="row"><div><div class="k">Product</div><div class="v" id="product"></div></div></div><br/>
+    <div class="row"><div><div class="k">Quantity</div><div class="v" id="qty"></div></div></div><br/>
+    <div class="row"><div><div class="k">Due Date</div><div class="v" id="due"></div></div></div>
+
+    <div class="badge">Status: <span id="status"></span></div>
+  </div>
 </div>
 
 <script type="module">
@@ -60,42 +92,63 @@
     apiKey: "AIzaSyBcTwfcZRKs-9z-NyBmwOPaXRAnQM_nh8o",
     authDomain: "mizxart-orders.firebaseapp.com",
     projectId: "mizxart-orders",
+    storageBucket: "mizxart-orders.firebasestorage.app",
+    messagingSenderId: "1078338622603",
+    appId: "1:1078338622603:web:80a38dc732637aaebcb08e"
   };
 
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
 
-  window.trackOrder = async function () {
-    let id = document.getElementById("searchId").value.trim();
+  const elId = document.getElementById("orderId");
+  const btn = document.getElementById("btnTrack");
+  const err = document.getElementById("error");
 
-    if (!id) {
-      alert("Sila masukkan Order ID");
-      return;
+  const box = document.getElementById("box");
+  const oid = document.getElementById("oid");
+  const pack = document.getElementById("pack");
+  const product = document.getElementById("product");
+  const qty = document.getElementById("qty");
+  const due = document.getElementById("due");
+  const status = document.getElementById("status");
+
+  async function track(){
+    err.textContent = "";
+    box.style.display = "none";
+
+    const id = elId.value.trim();
+    if(!id) return (err.textContent = "Sila masukkan Order ID.");
+
+    try{
+      const snap = await getDoc(doc(db, "orders", id));
+      if(!snap.exists()){
+        err.textContent = "Order tidak dijumpai. Pastikan Order ID betul.";
+        return;
+      }
+      const data = snap.data();
+      oid.textContent = "#" + id;
+      pack.textContent = data.pack || "-";
+      product.textContent = data.product || "-";
+      qty.textContent = (data.qty ?? "-");
+      due.textContent = data.due || "-";
+      status.textContent = data.status || "-";
+      box.style.display = "block";
+    }catch(e){
+      console.error(e);
+      err.textContent = "Error load. Sila cuba lagi.";
     }
+  }
 
-    const ref = doc(db, "orders", id);
-    const snap = await getDoc(ref);
+  btn.addEventListener("click", track);
+  elId.addEventListener("keydown", (e)=>{ if(e.key==="Enter") track(); });
 
-    if (!snap.exists()) {
-      document.getElementById("output").innerHTML = `
-        <div class="result">
-          ❌ Order ID <b>${id}</b> tidak dijumpai.
-        </div>
-      `;
-      return;
-    }
-
-    let data = snap.data();
-
-    document.getElementById("output").innerHTML = `
-      <div class="result">
-        <h3>Order #${id}</h3>
-        <p><b>Product:</b> ${data.product}</p>
-        <p><b>Qty:</b> ${data.qty}</p>
-        <p><b>Status:</b> ${data.status}</p>
-      </div>
-    `;
-  };
+  // ✅ Auto track from URL: track.html?id=12345
+  const params = new URLSearchParams(location.search);
+  const urlId = params.get("id");
+  if(urlId){
+    elId.value = urlId;
+    track();
+  }
 </script>
 
 </body>
