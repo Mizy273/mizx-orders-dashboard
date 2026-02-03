@@ -1,7 +1,7 @@
 <!DOCTYPE html>
-<!-- saved from url=(0058)file:///C:/Users/Tarmizi/Downloads/New%20folder/index.html -->
-<html lang="ms"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-  
+<html lang="ms">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Orders Pro Custom Box Mizxartstudio</title>
 
@@ -150,6 +150,17 @@
     .field{display:flex;flex-direction:column;gap:6px}
     .label{font-size:12px;color:var(--muted);font-weight:700}
     .actions-row{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;margin-top:10px}
+
+    /* Loading badge */
+    .loading{
+      display:inline-flex;align-items:center;gap:8px;
+      padding:8px 12px;border-radius:999px;
+      border:1px solid var(--border);
+      background:rgba(255,255,255,.04);
+      color:var(--muted);
+      font-size:12px;
+    }
+    .dot{width:8px;height:8px;border-radius:999px;background:rgba(139,92,246,.8)}
   </style>
 </head>
 
@@ -167,6 +178,10 @@
       <option value="PACKED">Packed</option>
       <option value="DONE">Completed</option>
     </select>
+
+    <span class="loading" id="cloudStatus" style="display:none">
+      <span class="dot"></span><span id="cloudText">Syncing...</span>
+    </span>
 
     <button class="btn-primary" id="btnSeed">Load Sample Data</button>
     <button class="btn-primary" id="btnExport">Export CSV</button>
@@ -237,38 +252,7 @@
         <th style="width:420px" class="right">Action</th>
       </tr>
     </thead>
-    <tbody id="tbody"><tr>
-      <td>71197</td>
-      <td>Tray Box</td>
-      <td class="product">HMG 7IU</td>
-      <td class="qty">300</td>
-      <td>
-        2026-02-10
-        
-      </td>
-      <td class="right">
-        <div class="stack">
-          <span class="badge purple">In-Print</span>
-
-          <!-- READY TO PACK button REMOVED (as requested) -->
-
-          <select data-action="status" data-id="71197">
-            
-              <option value="IN_PRINT" selected="">In-Print</option>
-            
-              <option value="READY">Ready To Pack</option>
-            
-              <option value="PACKED">Packed</option>
-            
-              <option value="DONE">Completed</option>
-            
-          </select>
-
-          <button class="btn-primary" data-action="edit" data-id="71197">Edit</button>
-          <button class="btn-danger" data-action="delete" data-id="71197">Delete</button>
-        </div>
-      </td>
-    </tr></tbody>
+    <tbody id="tbody"></tbody>
   </table>
 
   <div class="hint">Note: Overdue = Due Date sudah lepas &amp; status bukan Completed.</div>
@@ -278,63 +262,54 @@
       <h3>Status / Edit History Log</h3>
       <button class="btn-danger" id="btnClearLog">Clear Log</button>
     </div>
-    <div class="log" id="log">[02/02/2026, 16:37:07] Order 70604 deleted<br>[02/02/2026, 16:37:06] Order 70867 deleted<br>[02/02/2026, 16:37:04] Order 70886 deleted<br>[02/02/2026, 16:37:03] Order 71121 deleted<br>[02/02/2026, 16:37:01] Order 71196 deleted</div>
+    <div class="log" id="log"></div>
   </div>
 </div>
 
 <script>
-  // ====== STORAGE ======
-  const STORE_KEY = "orders_editable_v1";
+  // =========================
+  // LOCAL LOGS (browser only)
+  // =========================
+  const LOG_KEY = "orders_editable_v1_logs";
 
   // ====== STATUS ======
   const STATUS = { IN_PRINT:"IN_PRINT", READY:"READY", PACKED:"PACKED", DONE:"DONE" };
   const statusLabel = { IN_PRINT:"In-Print", READY:"Ready To Pack", PACKED:"Packed", DONE:"Completed" };
 
-  // ====== STATE ======
-  let orders = loadOrders();
+  // =========================
+  // STATE (orders from FIREBASE)
+  // =========================
+  let orders = [];     // each order will include docId from Firestore
   let logs = loadLogs();
 
   // when editing, only one row at a time
   let editingId = null;
   let draft = null; // {id, pack, product, qty, due}
 
-  // ====== INIT DEFAULT IF EMPTY ======
-  if (!orders.length) {
-    orders = seedData();
-    saveOrders();
-  }
-
-  // ====== HELPERS ======
+  // ====== SAMPLE DATA ======
   function seedData() {
     return [
-      {id:71197,pack:"Tray Box",product:"HMG 7IU",qty:300,due:"2026-02-10",status:"IN_PRINT"},
-      {id:71196,pack:"Tray Box",product:"AICAR",qty:300,due:"2026-02-10",status:"IN_PRINT"},
-      {id:71121,pack:"Tray Box",product:"RETRA - PURE - (30MG)",qty:500,due:"2026-02-13",status:"IN_PRINT"},
-      {id:70886,pack:"Tray Box",product:"Ozempic Pure",qty:300,due:"2026-01-30",status:"READY"},
-      {id:70867,pack:"Tray Box",product:"EPITALON 10mg/vial",qty:300,due:"2026-01-30",status:"READY"},
-      {id:70604,pack:"Tray Box",product:"RETRA PURE (10MG)",qty:5000,due:"2026-02-27",status:"IN_PRINT"}
+      {id:"71197",pack:"Tray Box",product:"HMG 7IU",qty:300,due:"2026-02-10",status:"IN_PRINT"},
+      {id:"71196",pack:"Tray Box",product:"AICAR",qty:300,due:"2026-02-10",status:"IN_PRINT"},
+      {id:"71121",pack:"Tray Box",product:"RETRA - PURE - (30MG)",qty:500,due:"2026-02-13",status:"IN_PRINT"},
+      {id:"70886",pack:"Tray Box",product:"Ozempic Pure",qty:300,due:"2026-01-30",status:"READY"},
+      {id:"70867",pack:"Tray Box",product:"EPITALON 10mg/vial",qty:300,due:"2026-01-30",status:"READY"},
+      {id:"70604",pack:"Tray Box",product:"RETRA PURE (10MG)",qty:5000,due:"2026-02-27",status:"IN_PRINT"}
     ];
   }
 
-  function saveOrders(){ localStorage.setItem(STORE_KEY, JSON.stringify(orders)); }
-  function loadOrders(){
-    try { return JSON.parse(localStorage.getItem(STORE_KEY) || "[]"); }
-    catch { return []; }
-  }
-
-  function saveLogs(){ localStorage.setItem(STORE_KEY + "_logs", JSON.stringify(logs)); }
+  // ====== LOGS ======
+  function saveLogs(){ localStorage.setItem(LOG_KEY, JSON.stringify(logs)); }
   function loadLogs(){
-    try { return JSON.parse(localStorage.getItem(STORE_KEY + "_logs") || "[]"); }
+    try { return JSON.parse(localStorage.getItem(LOG_KEY) || "[]"); }
     catch { return []; }
   }
-
   function logAction(msg){
     const time = new Date().toLocaleString();
     logs.unshift(`[${time}] ${msg}`);
     saveLogs();
     renderLogs();
   }
-
   function renderLogs(){
     const el = document.getElementById("log");
     if(!logs.length){
@@ -344,20 +319,19 @@
     el.innerHTML = logs.slice(0,20).map(x=>escapeHtml(x)).join("<br>");
   }
 
+  // ====== HELPERS ======
   function overdue(order){
     if(order.status==="DONE") return false;
     const dueT = new Date(order.due + "T00:00:00").getTime();
     const nowT = new Date().setHours(0,0,0,0);
     return dueT < nowT;
   }
-
   function badgeClass(status){
     if(status==="IN_PRINT") return "purple";
     if(status==="READY") return "amber";
     if(status==="PACKED" || status==="DONE") return "green";
     return "purple";
   }
-
   function escapeHtml(str){
     return String(str)
       .replaceAll("&", "&amp;")
@@ -366,25 +340,19 @@
       .replaceAll('"', "&quot;")
       .replaceAll("'", "&#039;");
   }
-
   function findOrder(id){
     return orders.find(o => String(o.id) === String(id));
   }
-
   function orderIdExists(newId, excludeId){
     return orders.some(o => String(o.id) === String(newId) && String(o.id) !== String(excludeId));
   }
-
   function nextOrderId(){
     const maxId = orders.reduce((m,o)=>Math.max(m, Number(o.id)||0), 70000);
-    return maxId + 1;
+    return String(maxId + 1);
   }
-
   function normalizeDateInput(val){
-    // expects yyyy-mm-dd, return same
     return (val || "").trim();
   }
-
   function clearNewOrderForm(){
     document.getElementById("newId").value = "";
     document.getElementById("newPack").value = "Tray Box";
@@ -392,6 +360,17 @@
     document.getElementById("newQty").value = "";
     document.getElementById("newDue").value = "";
     document.getElementById("newStatus").value = STATUS.IN_PRINT;
+  }
+
+  function setCloudStatus(show, text){
+    const wrap = document.getElementById("cloudStatus");
+    const t = document.getElementById("cloudText");
+    if(show){
+      wrap.style.display = "inline-flex";
+      t.textContent = text || "Syncing...";
+    }else{
+      wrap.style.display = "none";
+    }
   }
 
   // ====== RENDER ======
@@ -404,9 +383,9 @@
 
     const list = orders.filter(o=>{
       const matchQ =
-        o.product.toLowerCase().includes(q) ||
+        (o.product || "").toLowerCase().includes(q) ||
         String(o.id).includes(q) ||
-        o.pack.toLowerCase().includes(q);
+        (o.pack || "").toLowerCase().includes(q);
 
       const matchS = filter==="ALL" ? true : o.status===filter;
       return matchQ && matchS;
@@ -437,8 +416,6 @@
       <td class="right">
         <div class="stack">
           <span class="badge ${badgeClass(order.status)}">${statusLabel[order.status]}</span>
-
-          <!-- READY TO PACK button REMOVED (as requested) -->
 
           <select data-action="status" data-id="${escapeHtml(order.id)}">
             ${Object.values(STATUS).map(s=>`
@@ -492,7 +469,7 @@
     `;
   }
 
-  // ====== ACTIONS ======
+  // ====== UI ACTIONS (logic; cloud ops hooked below) ======
   function startEdit(id){
     if (editingId !== null && String(editingId) !== String(id)) {
       alert("Satu masa hanya boleh edit satu row. Save/Cancel dulu.");
@@ -513,144 +490,19 @@
     render();
   }
 
-  function saveEdit(originalId, rowEl){
-    const order = findOrder(originalId);
-    if (!order) return;
-
-    const idVal = rowEl.querySelector('[data-field="id"]').value.trim();
-    const packVal = rowEl.querySelector('[data-field="pack"]').value;
-    const productVal = rowEl.querySelector('[data-field="product"]').value.trim();
-    const qtyVal = Number(rowEl.querySelector('[data-field="qty"]').value);
-    const dueVal = rowEl.querySelector('[data-field="due"]').value;
-
-    if (!idVal) return alert("Order ID tak boleh kosong");
-    if (!productVal) return alert("Product tak boleh kosong");
-    if (!qtyVal || qtyVal <= 0) return alert("Qty mesti > 0");
-    if (!dueVal) return alert("Due Date wajib isi");
-
-    if (orderIdExists(idVal, originalId)) {
-      return alert("Order ID dah wujud. Sila guna ID lain.");
-    }
-
-    const before = { ...order };
-    order.id = idVal;
-    order.pack = packVal;
-    order.product = productVal;
-    order.qty = qtyVal;
-    order.due = dueVal;
-
-    editingId = null;
-    draft = null;
-
-    saveOrders();
-    logAction(`Order ${before.id} updated → ID:${order.id}, Pack:${order.pack}, Product:${order.product}, Qty:${order.qty}, Due:${order.due}`);
-    render();
-  }
-
-  function updateStatus(id,newStatus){
-    const order = findOrder(id);
-    if(!order) return;
-
-    if(!confirm(`Update Order ${order.id} → ${statusLabel[newStatus]} ?`)) return;
-    order.status=newStatus;
-
-    saveOrders();
-    logAction(`Order ${order.id} status changed to ${statusLabel[newStatus]}`);
-    render();
-  }
-
-  function deleteOrder(id){
-    const order = findOrder(id);
-    if(!order) return;
-
-    if(!confirm(`Delete order ${order.id}?`)) return;
-    orders = orders.filter(o=> String(o.id) !== String(id));
-
-    if (editingId !== null && String(editingId) === String(id)) {
-      editingId = null;
-      draft = null;
-    }
-
-    saveOrders();
-    logAction(`Order ${order.id} deleted`);
-    render();
-  }
-
-  function addNewOrder(){
-    if(editingId !== null){
-      alert("Tengah edit row. Save/Cancel dulu sebelum add order baru.");
-      return;
-    }
-
-    const idInput = document.getElementById("newId").value.trim();
-    const pack = document.getElementById("newPack").value;
-    const product = document.getElementById("newProduct").value.trim();
-    const qty = Number(document.getElementById("newQty").value);
-    const due = normalizeDateInput(document.getElementById("newDue").value);
-    const status = document.getElementById("newStatus").value;
-
-    if(!product) return alert("Product wajib isi");
-    if(!qty || qty <= 0) return alert("Qty mesti > 0");
-    if(!due) return alert("Due Date wajib isi");
-
-    let idVal = idInput ? String(Number(idInput)) : String(nextOrderId());
-    if(!idVal || idVal === "NaN") idVal = String(nextOrderId());
-
-    if(orderIdExists(idVal, null)){
-      return alert("Order ID dah wujud. Sila guna ID lain.");
-    }
-
-    const order = {
-      id: idVal,
-      pack,
-      product,
-      qty,
-      due,
-      status
-    };
-
-    orders.unshift(order);
-    saveOrders();
-    logAction(`New order added → ID:${order.id}, Pack:${order.pack}, Product:${order.product}, Qty:${order.qty}, Due:${order.due}, Status:${statusLabel[order.status]}`);
-    clearNewOrderForm();
-    render();
-  }
+  // Placeholder: these will be replaced by Firestore versions
+  async function saveEdit(){ alert("Firestore belum load"); }
+  async function updateStatus(){ alert("Firestore belum load"); }
+  async function deleteOrder(){ alert("Firestore belum load"); }
+  async function addNewOrder(){ alert("Firestore belum load"); }
 
   // ====== EVENTS ======
   document.getElementById("search").addEventListener("input", render);
   document.getElementById("filter").addEventListener("change", render);
 
-  document.getElementById("btnSeed").addEventListener("click", ()=>{
-    if(!confirm("Replace current data dengan sample?")) return;
-    orders = seedData();
-    saveOrders();
-    logs = [];
-    saveLogs();
-    logAction("Sample data loaded");
-    render();
-  });
-
-  document.getElementById("btnClear").addEventListener("click", ()=>{
-    if(!confirm("Clear semua orders?")) return;
-    orders = [];
-    editingId = null;
-    draft = null;
-    saveOrders();
-    logAction("All orders cleared");
-    render();
-  });
-
-  document.getElementById("btnClearLog").addEventListener("click", ()=>{
-    if(!confirm("Clear history log?")) return;
-    logs = [];
-    saveLogs();
-    renderLogs();
-  });
-
-  document.getElementById("btnAddOrder").addEventListener("click", addNewOrder);
+  document.getElementById("btnAddOrder").addEventListener("click", ()=>addNewOrder());
   document.getElementById("btnNewClear").addEventListener("click", clearNewOrderForm);
 
-  // Enter key to add (from form inputs)
   ["newId","newProduct","newQty","newDue"].forEach(id=>{
     document.getElementById(id).addEventListener("keydown", (e)=>{
       if(e.key === "Enter") addNewOrder();
@@ -679,7 +531,7 @@
   });
 
   // Event delegation on table
-  document.getElementById("tbody").addEventListener("click", (e)=>{
+  document.getElementById("tbody").addEventListener("click", async (e)=>{
     const el = e.target;
     const action = el?.dataset?.action;
     const id = el?.dataset?.id;
@@ -688,21 +540,21 @@
 
     if(action === "edit") startEdit(id);
     if(action === "cancel") cancelEdit();
-    if(action === "delete") deleteOrder(id);
+    if(action === "delete") await deleteOrder(id);
 
     if(action === "save"){
       const row = el.closest("tr");
-      saveEdit(id, row);
+      await saveEdit(id, row);
     }
   });
 
-  document.getElementById("tbody").addEventListener("change", (e)=>{
+  document.getElementById("tbody").addEventListener("change", async (e)=>{
     const el = e.target;
     const action = el?.dataset?.action;
     const id = el?.dataset?.id;
 
     if (action === "status") {
-      updateStatus(id, el.value);
+      await updateStatus(id, el.value);
       return;
     }
 
@@ -720,11 +572,242 @@
     }
   });
 
-  // ====== FIRST RENDER ======
-  // set default due date (today) for add form
+  document.getElementById("btnClearLog").addEventListener("click", ()=>{
+    if(!confirm("Clear history log?")) return;
+    logs = [];
+    saveLogs();
+    renderLogs();
+  });
+
+  // ====== INITIAL UI ======
   document.getElementById("newStatus").value = STATUS.IN_PRINT;
-  render();
+  renderLogs();
 </script>
 
+<!-- =========================
+     FIREBASE (ORDERS CLOUD)
+     ========================= -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import {
+    getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc
+  } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-</body></html>
+  const firebaseConfig = {
+    apiKey: "AIzaSyBcTwfcZRKs-9z-NyBmwOPaXRAnQM_nh8o",
+    authDomain: "mizxart-orders.firebaseapp.com",
+    projectId: "mizxart-orders",
+    storageBucket: "mizxart-orders.firebasestorage.app",
+    messagingSenderId: "1078338622603",
+    appId: "1:1078338622603:web:80a38dc732637aaebcb08e"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  const ORDERS_COL = collection(db, "orders");
+
+  async function loadOrdersCloud(){
+    setCloudStatus(true, "Loading orders...");
+    try{
+      const snap = await getDocs(ORDERS_COL);
+      orders = snap.docs.map(d => ({ ...d.data(), docId: d.id }));
+      // optional: sort by newest first if id is numeric-ish
+      orders.sort((a,b)=> Number(b.id||0) - Number(a.id||0));
+      render();
+    }catch(err){
+      console.error(err);
+      alert("Firebase load error. Check Firestore Rules / Console.");
+    }finally{
+      setCloudStatus(false);
+    }
+  }
+
+  async function clearAllCloud(){
+    setCloudStatus(true, "Clearing cloud...");
+    const snap = await getDocs(ORDERS_COL);
+    for (const d of snap.docs){
+      await deleteDoc(doc(db, "orders", d.id));
+    }
+    setCloudStatus(false);
+  }
+
+  async function seedCloud(){
+    setCloudStatus(true, "Seeding sample...");
+    const data = seedData();
+    for(const o of data){
+      await addDoc(ORDERS_COL, o);
+    }
+    setCloudStatus(false);
+  }
+
+  // Hook buttons (seed/clear) to cloud
+  document.getElementById("btnSeed").addEventListener("click", async ()=>{
+    if(!confirm("Replace current cloud data dengan sample?")) return;
+    try{
+      await clearAllCloud();
+      logs = [];
+      localStorage.setItem("orders_editable_v1_logs", JSON.stringify(logs));
+      await seedCloud();
+      logAction("Sample data loaded (Cloud)");
+      await loadOrdersCloud();
+    }catch(err){
+      console.error(err);
+      alert("Seed error. Check Firestore Rules / Console.");
+      setCloudStatus(false);
+    }
+  });
+
+  document.getElementById("btnClear").addEventListener("click", async ()=>{
+    if(!confirm("Clear semua orders (Cloud)?")) return;
+    try{
+      await clearAllCloud();
+      editingId = null;
+      draft = null;
+      logAction("All orders cleared (Cloud)");
+      await loadOrdersCloud();
+    }catch(err){
+      console.error(err);
+      alert("Clear error. Check Firestore Rules / Console.");
+      setCloudStatus(false);
+    }
+  });
+
+  // ====== REPLACE FUNCTIONS WITH CLOUD VERSIONS ======
+
+  // Add new order -> Cloud
+  window.addNewOrder = async function addNewOrderCloud(){
+    if(editingId !== null){
+      alert("Tengah edit row. Save/Cancel dulu sebelum add order baru.");
+      return;
+    }
+
+    const idInput = document.getElementById("newId").value.trim();
+    const pack = document.getElementById("newPack").value;
+    const product = document.getElementById("newProduct").value.trim();
+    const qty = Number(document.getElementById("newQty").value);
+    const due = normalizeDateInput(document.getElementById("newDue").value);
+    const status = document.getElementById("newStatus").value;
+
+    if(!product) return alert("Product wajib isi");
+    if(!qty || qty <= 0) return alert("Qty mesti > 0");
+    if(!due) return alert("Due Date wajib isi");
+
+    let idVal = idInput ? String(Number(idInput)) : String(nextOrderId());
+    if(!idVal || idVal === "NaN") idVal = String(nextOrderId());
+
+    if(orderIdExists(idVal, null)){
+      return alert("Order ID dah wujud. Sila guna ID lain.");
+    }
+
+    setCloudStatus(true, "Saving...");
+    try{
+      await addDoc(ORDERS_COL, { id:idVal, pack, product, qty, due, status });
+      logAction(`New order added (Cloud) → ID:${idVal}, Pack:${pack}, Product:${product}, Qty:${qty}, Due:${due}, Status:${statusLabel[status]}`);
+      clearNewOrderForm();
+      await loadOrdersCloud();
+    }catch(err){
+      console.error(err);
+      alert("Add error. Check Firestore Rules / Console.");
+    }finally{
+      setCloudStatus(false);
+    }
+  };
+
+  // Save edit -> Cloud
+  window.saveEdit = async function saveEditCloud(originalId, rowEl){
+    const order = findOrder(originalId);
+    if (!order) return;
+
+    const idVal = rowEl.querySelector('[data-field="id"]').value.trim();
+    const packVal = rowEl.querySelector('[data-field="pack"]').value;
+    const productVal = rowEl.querySelector('[data-field="product"]').value.trim();
+    const qtyVal = Number(rowEl.querySelector('[data-field="qty"]').value);
+    const dueVal = rowEl.querySelector('[data-field="due"]').value;
+
+    if (!idVal) return alert("Order ID tak boleh kosong");
+    if (!productVal) return alert("Product tak boleh kosong");
+    if (!qtyVal || qtyVal <= 0) return alert("Qty mesti > 0");
+    if (!dueVal) return alert("Due Date wajib isi");
+
+    if (orderIdExists(idVal, originalId)) {
+      return alert("Order ID dah wujud. Sila guna ID lain.");
+    }
+
+    setCloudStatus(true, "Updating...");
+    try{
+      const before = { ...order };
+
+      await updateDoc(doc(db, "orders", order.docId), {
+        id: idVal,
+        pack: packVal,
+        product: productVal,
+        qty: qtyVal,
+        due: dueVal
+      });
+
+      editingId = null;
+      draft = null;
+
+      logAction(`Order ${before.id} updated (Cloud) → ID:${idVal}, Pack:${packVal}, Product:${productVal}, Qty:${qtyVal}, Due:${dueVal}`);
+      await loadOrdersCloud();
+    }catch(err){
+      console.error(err);
+      alert("Update error. Check Firestore Rules / Console.");
+    }finally{
+      setCloudStatus(false);
+    }
+  };
+
+  // Update status -> Cloud
+  window.updateStatus = async function updateStatusCloud(id, newStatus){
+    const order = findOrder(id);
+    if(!order) return;
+
+    if(!confirm(`Update Order ${order.id} → ${statusLabel[newStatus]} ?`)) return;
+
+    setCloudStatus(true, "Updating status...");
+    try{
+      await updateDoc(doc(db, "orders", order.docId), { status: newStatus });
+      logAction(`Order ${order.id} status changed (Cloud) to ${statusLabel[newStatus]}`);
+      await loadOrdersCloud();
+    }catch(err){
+      console.error(err);
+      alert("Status update error. Check Firestore Rules / Console.");
+    }finally{
+      setCloudStatus(false);
+    }
+  };
+
+  // Delete -> Cloud
+  window.deleteOrder = async function deleteOrderCloud(id){
+    const order = findOrder(id);
+    if(!order) return;
+
+    if(!confirm(`Delete order ${order.id}?`)) return;
+
+    setCloudStatus(true, "Deleting...");
+    try{
+      await deleteDoc(doc(db, "orders", order.docId));
+
+      if (editingId !== null && String(editingId) === String(id)) {
+        editingId = null;
+        draft = null;
+      }
+
+      logAction(`Order ${order.id} deleted (Cloud)`);
+      await loadOrdersCloud();
+    }catch(err){
+      console.error(err);
+      alert("Delete error. Check Firestore Rules / Console.");
+    }finally{
+      setCloudStatus(false);
+    }
+  };
+
+  // FIRST LOAD
+  await loadOrdersCloud();
+</script>
+
+</body>
+</html>
