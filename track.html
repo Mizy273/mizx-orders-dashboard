@@ -1,193 +1,102 @@
 <!DOCTYPE html>
-<html lang="ms">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Track Your Order</title>
-
+  <title>Track Order Mizxart</title>
   <style>
     body {
-      margin: 0;
       font-family: Arial;
-      background: #050b1c;
-      color: white;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
+      background:#0b1020;
+      color:white;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      height:100vh;
     }
-
     .card {
-      width: 420px;
-      background: #0c1638;
-      padding: 25px;
-      border-radius: 18px;
-      box-shadow: 0 0 25px rgba(0,0,0,0.4);
+      background:#111a33;
+      padding:30px;
+      border-radius:20px;
+      width:400px;
+      text-align:center;
     }
-
-    h1 {
-      margin: 0;
-      font-size: 22px;
-      text-align: center;
+    input,button {
+      width:100%;
+      padding:12px;
+      margin-top:10px;
+      border-radius:10px;
+      border:none;
     }
-
-    p {
-      font-size: 13px;
-      text-align: center;
-      color: rgba(255,255,255,0.7);
-    }
-
-    input {
-      width: 100%;
-      padding: 12px;
-      margin-top: 15px;
-      border-radius: 12px;
-      border: none;
-      font-size: 15px;
-      background: #111d44;
-      color: white;
-    }
-
     button {
-      width: 100%;
-      padding: 13px;
-      margin-top: 12px;
-      border: none;
-      border-radius: 12px;
-      background: #7c3aed;
-      color: white;
-      font-weight: bold;
-      cursor: pointer;
-      font-size: 15px;
+      background:#8b5cf6;
+      color:white;
+      font-weight:bold;
+      cursor:pointer;
     }
-
     .result {
-      margin-top: 20px;
-      padding: 15px;
-      border-radius: 14px;
-      background: rgba(255,255,255,0.05);
-      display: none;
-    }
-
-    .notfound {
-      margin-top: 15px;
-      text-align: center;
-      color: #ff6666;
-      display: none;
-    }
-
-    .badge {
-      display: inline-block;
-      padding: 6px 14px;
-      border-radius: 999px;
-      margin-top: 10px;
-      font-size: 13px;
-      font-weight: bold;
-      background: rgba(124,58,237,0.3);
+      margin-top:20px;
+      padding:15px;
+      background:#182044;
+      border-radius:15px;
     }
   </style>
 </head>
-
 <body>
 
-  <div class="card">
-    <h1>Track Your Order</h1>
-    <p>Masukkan Order ID untuk semak status order anda.</p>
+<div class="card">
+  <h2>Track Your Order</h2>
+  <p>Masukkan Order ID untuk semak status</p>
 
-    <input id="trackId" placeholder="Contoh: 12345" />
-    <button onclick="trackOrder()">Track Order</button>
+  <input id="searchId" placeholder="Contoh: 999">
+  <button onclick="trackOrder()">Track Order</button>
 
-    <div class="notfound" id="notfound">
-      ❌ Order ID tidak dijumpai.
-    </div>
+  <div id="output"></div>
+</div>
 
-    <div class="result" id="resultBox">
-      <h2 id="orderTitle"></h2>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-      <p><b>Pack:</b> <span id="pack"></span></p>
-      <p><b>Product:</b> <span id="product"></span></p>
-      <p><b>Quantity:</b> <span id="qty"></span></p>
-      <p><b>Due Date:</b> <span id="due"></span></p>
+  const firebaseConfig = {
+    apiKey: "AIzaSyBcTwfcZRKs-9z-NyBmwOPaXRAnQM_nh8o",
+    authDomain: "mizxart-orders.firebaseapp.com",
+    projectId: "mizxart-orders",
+  };
 
-      <div class="badge" id="status"></div>
-    </div>
-  </div>
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
 
-  <!-- ✅ FIREBASE TRACK SCRIPT -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  window.trackOrder = async function () {
+    let id = document.getElementById("searchId").value.trim();
 
-    import {
-      getFirestore,
-      doc,
-      getDoc
-    } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-    // Firebase Config
-    const firebaseConfig = {
-      apiKey: "AIzaSyBcTwfcZRKs-9z-NyBmwOPaXRAnQM_nh8o",
-      authDomain: "mizxart-orders.firebaseapp.com",
-      projectId: "mizxart-orders",
-      storageBucket: "mizxart-orders.firebasestorage.app",
-      messagingSenderId: "1078338622603",
-      appId: "1:1078338622603:web:80a38dc732637aaebcb08e"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-
-    // ============================
-    // ✅ TRACK ORDER FUNCTION
-    // ============================
-    window.trackOrder = async function () {
-      const id = document.getElementById("trackId").value.trim();
-
-      const resultBox = document.getElementById("resultBox");
-      const notfound = document.getElementById("notfound");
-
-      resultBox.style.display = "none";
-      notfound.style.display = "none";
-
-      if (!id) {
-        alert("Sila masukkan Order ID");
-        return;
-      }
-
-      const ref = doc(db, "orders", id);
-      const snap = await getDoc(ref);
-
-      if (!snap.exists()) {
-        notfound.style.display = "block";
-        return;
-      }
-
-      const o = snap.data();
-
-      document.getElementById("orderTitle").innerText =
-        "Order #" + o.id;
-
-      document.getElementById("pack").innerText = o.pack;
-      document.getElementById("product").innerText = o.product;
-      document.getElementById("qty").innerText = o.qty;
-      document.getElementById("due").innerText = o.due;
-
-      document.getElementById("status").innerText =
-        "Status: " + o.status;
-
-      resultBox.style.display = "block";
-    };
-
-    // ============================
-    // ✅ AUTO LOAD ?id=12345
-    // ============================
-    const params = new URLSearchParams(window.location.search);
-    const autoId = params.get("id");
-
-    if (autoId) {
-      document.getElementById("trackId").value = autoId;
-      trackOrder();
+    if (!id) {
+      alert("Sila masukkan Order ID");
+      return;
     }
-  </script>
+
+    const ref = doc(db, "orders", id);
+    const snap = await getDoc(ref);
+
+    if (!snap.exists()) {
+      document.getElementById("output").innerHTML = `
+        <div class="result">
+          ❌ Order ID <b>${id}</b> tidak dijumpai.
+        </div>
+      `;
+      return;
+    }
+
+    let data = snap.data();
+
+    document.getElementById("output").innerHTML = `
+      <div class="result">
+        <h3>Order #${id}</h3>
+        <p><b>Product:</b> ${data.product}</p>
+        <p><b>Qty:</b> ${data.qty}</p>
+        <p><b>Status:</b> ${data.status}</p>
+      </div>
+    `;
+  };
+</script>
 
 </body>
 </html>
