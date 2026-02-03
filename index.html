@@ -3,133 +3,120 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Orders Dashboard Mizxartstudio</title>
+  <title>Mizxart Orders Dashboard</title>
 
   <style>
     body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: radial-gradient(circle at top, #111827, #050816);
+      font-family: Arial;
+      background: #050b1c;
       color: white;
-      padding: 40px;
+      padding: 30px;
       text-align: center;
     }
 
-    h1 {
-      margin-bottom: 30px;
+    .box {
+      max-width: 600px;
+      margin: auto;
+      background: rgba(255,255,255,0.05);
+      padding: 25px;
+      border-radius: 15px;
     }
 
-    input, select, button {
+    input, select {
       width: 90%;
-      max-width: 500px;
       padding: 12px;
       margin: 8px 0;
       border-radius: 10px;
       border: none;
-      font-size: 16px;
+      outline: none;
     }
 
     button {
-      background: #7c3aed;
+      width: 95%;
+      padding: 14px;
+      margin-top: 10px;
+      background: purple;
       color: white;
+      font-size: 16px;
+      border: none;
+      border-radius: 12px;
       cursor: pointer;
-      font-weight: bold;
-    }
-
-    button:hover {
-      opacity: 0.85;
     }
 
     table {
       width: 100%;
-      margin-top: 30px;
+      margin-top: 20px;
       border-collapse: collapse;
     }
 
-    th, td {
-      padding: 12px;
+    td, th {
+      padding: 10px;
       border-bottom: 1px solid rgba(255,255,255,0.2);
     }
 
-    .delete-btn {
-      background: #ef4444;
-      padding: 8px 14px;
+    .delbtn {
+      background: red;
+      padding: 8px 12px;
       border-radius: 8px;
+      cursor: pointer;
       border: none;
       color: white;
-      cursor: pointer;
-    }
-
-    .delete-btn:hover {
-      opacity: 0.8;
     }
   </style>
 </head>
 
 <body>
 
-  <h1>Orders Dashboard Mizxartstudio</h1>
+  <h1>📦 Mizxart Orders Dashboard</h1>
 
-  <h2>Add New Order</h2>
+  <div class="box">
 
-  <input id="orderId" placeholder="Order ID (Example: TEST1)" />
-  <input id="pack" placeholder="Pack (Example: Tray Box)" />
-  <input id="product" placeholder="Product Name" />
-  <input id="qty" type="number" placeholder="Quantity" />
-  <input id="due" type="date" />
+    <h2>Add New Order</h2>
 
-  <select id="status">
-    <option value="IN_PRINT">In Print</option>
-    <option value="READY">Ready</option>
-    <option value="COMPLETED">Completed</option>
-  </select>
+    <input id="orderId" placeholder="Order ID (contoh: TEST1)" />
+    <input id="pack" placeholder="Pack (Tray Box)" />
+    <input id="product" placeholder="Product Name" />
+    <input id="qty" type="number" placeholder="Quantity" />
+    <input id="due" type="date" />
 
-  <button onclick="addOrder()">Add / Update Order</button>
+    <select id="status">
+      <option value="IN_PRINT">In Print</option>
+      <option value="READY">Ready</option>
+      <option value="COMPLETED">Completed</option>
+    </select>
 
-  <h2>Orders List</h2>
+    <button onclick="addOrder()">➕ Add / Update Order</button>
 
-  <table>
-    <thead>
-      <tr>
-        <th>ID</th>
-        <th>Pack</th>
-        <th>Product</th>
-        <th>Qty</th>
-        <th>Due</th>
-        <th>Status</th>
-        <th>Action</th>
-      </tr>
-    </thead>
+    <h2 style="margin-top:30px;">Orders List</h2>
 
-    <tbody id="ordersTable"></tbody>
-  </table>
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Product</th>
+          <th>Qty</th>
+          <th>Status</th>
+          <th>Delete</th>
+        </tr>
+      </thead>
+      <tbody id="ordersTable"></tbody>
+    </table>
 
-  <!-- FIREBASE FULL SETUP -->
+  </div>
+
+  <!-- Firebase Full Setup -->
   <script type="module">
-    // ===============================
-    // 🔥 FIREBASE IMPORTS
-    // ===============================
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-
     import {
       getFirestore,
       doc,
       setDoc,
       deleteDoc,
-      onSnapshot,
-      collection
+      collection,
+      onSnapshot
     } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    import {
-      getAuth,
-      signInWithEmailAndPassword,
-      onAuthStateChanged
-    } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-
-
-    // ===============================
-    // 🔥 FIREBASE CONFIG
-    // ===============================
+    // 🔥 Firebase Config
     const firebaseConfig = {
       apiKey: "AIzaSyBcTwfcZRKs-9z-NyBmwOPaXRAnQM_nh8o",
       authDomain: "mizxart-orders.firebaseapp.com",
@@ -139,101 +126,71 @@
       appId: "1:1078338622603:web:80a38dc732637aaebcb08e"
     };
 
-    // ===============================
-    // 🔥 INIT APP
-    // ===============================
+    // Init Firebase
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-    const auth = getAuth(app);
 
-
-    // ===============================
-    // ✅ ADMIN LOGIN POPUP
-    // ===============================
-    onAuthStateChanged(auth, (user) => {
-      if (!user) {
-        const email = prompt("Admin Email:");
-        const password = prompt("Admin Password:");
-
-        signInWithEmailAndPassword(auth, email, password)
-          .then(() => {
-            alert("Login Success ✅");
-          })
-          .catch((err) => {
-            alert("Login Failed ❌");
-            console.error(err);
-          });
-      }
-    });
-
-
-    // ===============================
-    // ✅ ADD / UPDATE ORDER
-    // ===============================
+    // ✅ Add Order
     window.addOrder = async function () {
+      let id = document.getElementById("orderId").value.trim();
+      let pack = document.getElementById("pack").value;
+      let product = document.getElementById("product").value;
+      let qty = document.getElementById("qty").value;
+      let due = document.getElementById("due").value;
+      let status = document.getElementById("status").value;
+
+      if (!id) {
+        alert("Order ID wajib isi!");
+        return;
+      }
+
       try {
-        const id = document.getElementById("orderId").value.trim();
-        const pack = document.getElementById("pack").value;
-        const product = document.getElementById("product").value;
-        const qty = Number(document.getElementById("qty").value);
-        const due = document.getElementById("due").value;
-        const status = document.getElementById("status").value;
-
-        if (!id) return alert("Order ID wajib isi!");
-
         await setDoc(doc(db, "orders", id), {
           id,
           pack,
           product,
-          qty,
+          qty: Number(qty),
           due,
           status
         });
 
-        alert("Order Saved ✅");
-
+        alert("✅ Order saved!");
       } catch (err) {
-        alert("Add error. Check Firestore Rules / Console.");
-        console.error(err);
+        alert("❌ Add error");
+        console.log(err);
       }
     };
 
-
-    // ===============================
-    // ✅ DELETE ORDER
-    // ===============================
+    // ✅ Delete Order
     window.deleteOrder = async function (id) {
+      if (!confirm("Delete order " + id + "?")) return;
+
       try {
         await deleteDoc(doc(db, "orders", id));
-        alert("Order Deleted ✅");
+        alert("🗑️ Deleted!");
       } catch (err) {
-        alert("Delete error. Check Firestore Rules / Console.");
-        console.error(err);
+        alert("❌ Delete error");
+        console.log(err);
       }
     };
 
-
-    // ===============================
-    // ✅ LIVE DISPLAY ORDERS
-    // ===============================
-    const table = document.getElementById("ordersTable");
+    // ✅ Auto Load Orders Table
+    const ordersTable = document.getElementById("ordersTable");
 
     onSnapshot(collection(db, "orders"), (snapshot) => {
-      table.innerHTML = "";
+      ordersTable.innerHTML = "";
 
       snapshot.forEach((docSnap) => {
-        const order = docSnap.data();
+        let o = docSnap.data();
 
-        table.innerHTML += `
+        ordersTable.innerHTML += `
           <tr>
-            <td>${order.id}</td>
-            <td>${order.pack}</td>
-            <td>${order.product}</td>
-            <td>${order.qty}</td>
-            <td>${order.due}</td>
-            <td>${order.status}</td>
+            <td>${o.id}</td>
+            <td>${o.product}</td>
+            <td>${o.qty}</td>
+            <td>${o.status}</td>
             <td>
-              <button class="delete-btn" onclick="deleteOrder('${order.id}')">
+              <button class="delbtn" onclick="deleteOrder('${o.id}')">
                 Delete
               </button>
             </td>
@@ -241,7 +198,7 @@
         `;
       });
     });
-
   </script>
+
 </body>
 </html>
