@@ -1,193 +1,200 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Orders Dashboard</title>
+  <meta charset="UTF-8" />
+  <title>Admin Orders Dashboard</title>
   <style>
     body {
       font-family: Arial;
-      background: #0b1020;
-      color: white;
-      text-align: center;
-      padding: 30px;
+      background:#0b1020;
+      color:white;
+      text-align:center;
+      padding:30px;
     }
-
     input, select, button {
-      width: 80%;
-      padding: 12px;
-      margin: 8px;
-      border-radius: 10px;
-      border: none;
-      font-size: 14px;
+      padding:10px;
+      margin:6px;
+      border-radius:8px;
+      border:none;
+      width:250px;
     }
-
     button {
-      background: #7c3aed;
-      color: white;
-      cursor: pointer;
-      font-weight: bold;
+      cursor:pointer;
+      background:#8b5cf6;
+      color:white;
+      font-weight:bold;
     }
-
     table {
-      width: 90%;
-      margin: 20px auto;
-      border-collapse: collapse;
+      margin:auto;
+      margin-top:30px;
+      border-collapse:collapse;
+      width:80%;
     }
-
-    th, td {
-      padding: 12px;
-      border-bottom: 1px solid rgba(255,255,255,0.2);
+    td, th {
+      border:1px solid #333;
+      padding:10px;
     }
-
-    .deleteBtn {
-      background: red;
-      padding: 8px 14px;
-      border-radius: 8px;
-      cursor: pointer;
-      color: white;
-      border: none;
+    .danger {
+      background:red;
+      padding:6px 12px;
+      border-radius:6px;
+      cursor:pointer;
     }
   </style>
 </head>
-
 <body>
 
-  <h1>Orders Dashboard Mizxartstudio</h1>
+<h1>Admin Orders Dashboard</h1>
 
-  <h2>Add / Update Order</h2>
+<h2>Login Admin</h2>
+<input id="email" placeholder="Admin Email" value="iamtarmizikadir@gmail.com"><br>
+<input id="password" placeholder="Password" type="password"><br>
+<button onclick="login()">Login</button>
 
-  <input id="orderId" placeholder="Order ID (cth: 12345)">
-  <input id="product" placeholder="Product (cth: HGH)">
-  <input id="qty" type="number" placeholder="Quantity">
-  <input id="due" type="date">
+<hr><br>
 
-  <select id="status">
-    <option value="IN_PRINT">In Print</option>
-    <option value="READY">Ready</option>
-    <option value="PACKED">Packed</option>
-    <option value="DONE">Completed</option>
-  </select>
+<h2>Add Order</h2>
 
-  <button onclick="addOrder()">➕ Add / Update Order</button>
+<input id="orderId" placeholder="Order ID (cth: 12345)"><br>
+<input id="pack" placeholder="Pack (Tray Box)"><br>
+<input id="product" placeholder="Product"><br>
+<input id="qty" placeholder="Qty" type="number"><br>
+<input id="due" type="date"><br>
 
-  <h2>All Orders</h2>
+<select id="status">
+  <option value="IN_PRINT">IN_PRINT</option>
+  <option value="READY">READY</option>
+  <option value="PACKED">PACKED</option>
+  <option value="DONE">DONE</option>
+</select><br>
 
-  <table>
-    <thead>
-      <tr>
-        <th>ID</th>
-        <th>Product</th>
-        <th>Qty</th>
-        <th>Status</th>
-        <th>Action</th>
-      </tr>
-    </thead>
-    <tbody id="ordersTable"></tbody>
-  </table>
+<button onclick="addOrder()">Add / Update Order</button>
 
-  <!-- Firebase FULL Setup -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import {
-      getFirestore,
-      doc,
-      setDoc,
-      getDocs,
-      deleteDoc,
-      collection
-    } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+<h2>Orders List</h2>
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Product</th>
+      <th>Qty</th>
+      <th>Status</th>
+      <th>Action</th>
+    </tr>
+  </thead>
+  <tbody id="ordersTable"></tbody>
+</table>
 
-    // ✅ Firebase Config
-    const firebaseConfig = {
-      apiKey: "AIzaSyBcTwfcZRKs-9z-NyBmwOPaXRAnQM_nh8o",
-      authDomain: "mizxart-orders.firebaseapp.com",
-      projectId: "mizxart-orders",
-      storageBucket: "mizxart-orders.firebasestorage.app",
-      messagingSenderId: "1078338622603",
-      appId: "1:1078338622603:web:80a38dc732637aaebcb08e"
-    };
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+  import {
+    getFirestore,
+    doc,
+    setDoc,
+    deleteDoc,
+    collection,
+    getDocs
+  } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    // ✅ LOAD ORDERS FUNCTION
-    async function loadOrders() {
-      const table = document.getElementById("ordersTable");
-      table.innerHTML = "";
+  import {
+    getAuth,
+    signInWithEmailAndPassword,
+    onAuthStateChanged
+  } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-      const snap = await getDocs(collection(db, "orders"));
+  const firebaseConfig = {
+    apiKey: "AIzaSyBcTwfcZRKs-9z-NyBmwOPaXRAnQM_nh8o",
+    authDomain: "mizxart-orders.firebaseapp.com",
+    projectId: "mizxart-orders",
+    storageBucket: "mizxart-orders.firebasestorage.app",
+    messagingSenderId: "1078338622603",
+    appId: "1:1078338622603:web:80a38dc732637aaebcb08e"
+  };
 
-      snap.forEach((docSnap) => {
-        const data = docSnap.data();
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const auth = getAuth(app);
 
-        table.innerHTML += `
-          <tr>
-            <td>${data.id}</td>
-            <td>${data.product}</td>
-            <td>${data.qty}</td>
-            <td>${data.status}</td>
-            <td>
-              <button class="deleteBtn" onclick="deleteOrder('${data.id}')">
-                Delete
-              </button>
-            </td>
-          </tr>
-        `;
-      });
+  // ✅ LOGIN
+  window.login = async function () {
+    let email = document.getElementById("email").value;
+    let password = document.getElementById("password").value;
+
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      alert("Login success!");
+    } catch (err) {
+      alert("Login failed: " + err.message);
     }
+  };
 
-    // ✅ ADD ORDER (DocID = Order ID)
-    window.addOrder = async function () {
+  // ✅ ADD ORDER (DocID = OrderID)
+  window.addOrder = async function () {
+    let id = document.getElementById("orderId").value.trim();
+    let pack = document.getElementById("pack").value.trim();
+    let product = document.getElementById("product").value.trim();
+    let qty = Number(document.getElementById("qty").value);
+    let due = document.getElementById("due").value;
+    let status = document.getElementById("status").value;
 
-      let id = document.getElementById("orderId").value.trim();
-      let product = document.getElementById("product").value.trim();
-      let qty = Number(document.getElementById("qty").value);
-      let due = document.getElementById("due").value;
-      let status = document.getElementById("status").value;
+    if (!id) return alert("Order ID wajib isi!");
 
-      if (!id) return alert("Order ID wajib isi!");
+    try {
+      await setDoc(doc(db, "orders", id), {
+        id,
+        pack,
+        product,
+        qty,
+        due,
+        status
+      });
 
-      try {
-        await setDoc(doc(db, "orders", id), {
-          id,
-          product,
-          qty,
-          due,
-          status
-        });
+      alert("Order saved! DocID = " + id);
+      loadOrders();
+    } catch (err) {
+      alert("Add error: " + err.message);
+    }
+  };
 
-        alert("✅ Order saved!");
+  // ✅ DELETE ORDER
+  window.deleteOrder = async function (id) {
+    if (!confirm("Delete order " + id + "?")) return;
 
-        document.getElementById("orderId").value = "";
-        document.getElementById("product").value = "";
-        document.getElementById("qty").value = "";
-        document.getElementById("due").value = "";
+    try {
+      await deleteDoc(doc(db, "orders", id));
+      alert("Deleted!");
+      loadOrders();
+    } catch (err) {
+      alert("Delete error: " + err.message);
+    }
+  };
 
-        loadOrders();
+  // ✅ LOAD ORDERS
+  async function loadOrders() {
+    const snap = await getDocs(collection(db, "orders"));
+    let html = "";
 
-      } catch (err) {
-        console.error(err);
-        alert("Add Error: " + err.message);
-      }
-    };
+    snap.forEach(docu => {
+      let o = docu.data();
+      html += `
+        <tr>
+          <td>${o.id}</td>
+          <td>${o.product}</td>
+          <td>${o.qty}</td>
+          <td>${o.status}</td>
+          <td><span class="danger" onclick="deleteOrder('${o.id}')">Delete</span></td>
+        </tr>
+      `;
+    });
 
-    // ✅ DELETE ORDER
-    window.deleteOrder = async function (id) {
-      if (!confirm("Delete order " + id + "?")) return;
+    document.getElementById("ordersTable").innerHTML = html;
+  }
 
-      try {
-        await deleteDoc(doc(db, "orders", id));
-        alert("✅ Deleted!");
-        loadOrders();
-      } catch (err) {
-        console.error(err);
-        alert("Delete Error: " + err.message);
-      }
-    };
+  // Auto refresh bila login
+  onAuthStateChanged(auth, user => {
+    if (user) loadOrders();
+  });
 
-    // FIRST LOAD
-    loadOrders();
-  </script>
-
+</script>
 </body>
 </html>
