@@ -1,413 +1,247 @@
 <!DOCTYPE html>
-<html lang="ms">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Orders Dashboard (Admin)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Orders Dashboard Mizxartstudio</title>
 
   <style>
-    :root{
-      --bg:#0b1020; --card:#111a33; --text:#e6edf7; --muted:#9aa7c2;
-      --border:rgba(255,255,255,.08);
-      --purple:#8b5cf6; --purple-bg:rgba(139,92,246,.15);
-      --red:#ef4444; --red-bg:rgba(239,68,68,.12);
-      --green:#22c55e; --green-bg:rgba(34,197,94,.14);
-      --amber:#f59e0b; --amber-bg:rgba(245,158,11,.14);
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: radial-gradient(circle at top, #111827, #050816);
+      color: white;
+      padding: 40px;
+      text-align: center;
     }
-    *{box-sizing:border-box}
-    body{
-      margin:0;font-family:system-ui,Segoe UI,Roboto,Arial;color:var(--text);
-      background: radial-gradient(900px 400px at 15% 0%, #182044 0%, var(--bg) 60%);
+
+    h1 {
+      margin-bottom: 30px;
     }
-    .wrap{max-width:1100px;margin:24px auto;padding:0 16px 40px}
-    h1{margin:0;font-size:22px;font-weight:900}
-    .sub{margin:6px 0 16px;color:var(--muted);font-size:13px}
-    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-    input,select,button{
-      border-radius:12px;border:1px solid var(--border);
-      background:rgba(17,26,51,.8);color:var(--text);
-      padding:10px 12px;font-size:13px;outline:none;
+
+    input, select, button {
+      width: 90%;
+      max-width: 500px;
+      padding: 12px;
+      margin: 8px 0;
+      border-radius: 10px;
+      border: none;
+      font-size: 16px;
     }
-    button{cursor:pointer;font-weight:800;transition:.15s}
-    button:hover{transform:scale(1.02)}
-    .btn-primary{background:var(--purple-bg);border-color:rgba(139,92,246,.35)}
-    .btn-danger{background:var(--red-bg);border-color:rgba(239,68,68,.35);color:#fecaca}
-    .btn-ok{background:var(--green-bg);border-color:rgba(34,197,94,.35);color:#bbf7d0}
-    .card{
-      margin-top:14px;padding:14px;border-radius:18px;border:1px solid var(--border);
-      background:rgba(17,26,51,.55);
+
+    button {
+      background: #7c3aed;
+      color: white;
+      cursor: pointer;
+      font-weight: bold;
     }
-    .grid{
-      display:grid;grid-template-columns: 1fr 1fr 1.3fr .7fr 1fr 1fr;
-      gap:10px;align-items:end;
+
+    button:hover {
+      opacity: 0.85;
     }
-    @media(max-width:980px){ .grid{grid-template-columns:1fr 1fr} }
-    .label{font-size:12px;color:var(--muted);font-weight:800;margin-bottom:6px}
-    table{
-      width:100%;border-collapse:separate;border-spacing:0;margin-top:14px;
-      background:rgba(17,26,51,.6);border:1px solid var(--border);
-      border-radius:18px;overflow:hidden;
+
+    table {
+      width: 100%;
+      margin-top: 30px;
+      border-collapse: collapse;
     }
-    thead th{
-      padding:14px;font-size:12px;color:var(--muted);
-      text-align:left;border-bottom:1px solid var(--border);white-space:nowrap;
+
+    th, td {
+      padding: 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.2);
     }
-    tbody td{padding:14px;border-bottom:1px solid var(--border);font-size:13px}
-    tbody tr:last-child td{border-bottom:none}
-    .badge{
-      padding:6px 10px;border-radius:999px;font-size:12px;
-      border:1px solid var(--border);display:inline-flex;align-items:center;gap:6px;
-      white-space:nowrap;
+
+    .delete-btn {
+      background: #ef4444;
+      padding: 8px 14px;
+      border-radius: 8px;
+      border: none;
+      color: white;
+      cursor: pointer;
     }
-    .b-purple{background:var(--purple-bg);border-color:rgba(139,92,246,.4)}
-    .b-amber{background:var(--amber-bg);border-color:rgba(245,158,11,.45);color:#fde68a}
-    .b-green{background:var(--green-bg);border-color:rgba(34,197,94,.45);color:#bbf7d0}
-    .b-red{background:var(--red-bg);border-color:rgba(239,68,68,.45);color:#fecaca}
-    .right{text-align:right}
-    .muted{color:var(--muted)}
-    .stack{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;align-items:center}
-    .pill{padding:8px 10px;border-radius:14px;border:1px solid var(--border);background:rgba(10,14,30,.5)}
-    .small{font-size:12px}
-    .link{color:#c4b5fd;text-decoration:none}
-    .link:hover{text-decoration:underline}
+
+    .delete-btn:hover {
+      opacity: 0.8;
+    }
   </style>
 </head>
 
 <body>
-<div class="wrap">
-  <h1>Orders Dashboard Mizxartstudio (Admin)</h1>
-  <div class="sub">Admin only. Customer tracking: <a class="link" href="./track.html" target="_blank">track.html</a></div>
 
-  <!-- AUTH -->
-  <div class="card">
-    <div class="row" style="justify-content:space-between;">
-      <div>
-        <div class="label">Admin Login (Firebase Auth)</div>
-        <div id="authState" class="pill small muted">Not logged in</div>
-      </div>
-      <div class="row">
-        <input id="email" placeholder="Email" style="min-width:220px">
-        <input id="password" type="password" placeholder="Password" style="min-width:220px">
-        <button class="btn-primary" id="btnLogin">Login</button>
-        <button class="btn-danger" id="btnLogout" style="display:none">Logout</button>
-      </div>
-    </div>
-    <div class="muted small" style="margin-top:10px">
-      Tip: Only <b>iamtarmizikadir@gmail.com</b> boleh write sebab Rules lock.
-    </div>
-  </div>
+  <h1>Orders Dashboard Mizxartstudio</h1>
 
-  <!-- ADD / UPDATE -->
-  <div class="card">
-    <div class="label">Add / Update Order (DocID = Order ID)</div>
-    <div class="grid">
-      <div>
-        <div class="label">Order ID (unique)</div>
-        <input id="orderId" placeholder="cth: 12345 / TEST 1">
-      </div>
-      <div>
-        <div class="label">Pack</div>
-        <select id="pack">
-          <option>Tray Box</option>
-          <option>Bottle</option>
-          <option>Sachet</option>
-          <option>Box</option>
-        </select>
-      </div>
-      <div>
-        <div class="label">Product</div>
-        <input id="product" placeholder="cth: HMG 7IU">
-      </div>
-      <div>
-        <div class="label">Qty</div>
-        <input id="qty" type="number" min="1" step="1" placeholder="cth: 300">
-      </div>
-      <div>
-        <div class="label">Due Date</div>
-        <input id="due" type="date">
-      </div>
-      <div>
-        <div class="label">Status</div>
-        <select id="status">
-          <option value="IN_PRINT">In-Print</option>
-          <option value="READY">Ready To Pack</option>
-          <option value="PACKED">Packed</option>
-          <option value="DONE">Completed</option>
-        </select>
-      </div>
-    </div>
-    <div class="row" style="justify-content:flex-end;margin-top:10px">
-      <button id="btnClear" class="btn-ok">Clear Form</button>
-      <button id="btnSave" class="btn-primary">Add / Update Order</button>
-    </div>
-    <div class="muted small" style="margin-top:10px">
-      Auto share link customer: <span class="pill small">track.html?id=ORDERID</span>
-    </div>
-  </div>
+  <h2>Add New Order</h2>
 
-  <!-- LIST -->
-  <div class="card">
-    <div class="row" style="justify-content:space-between;">
-      <div class="label">All Orders (Realtime)</div>
-      <div class="row">
-        <input id="search" placeholder="Search ID / Product..." style="min-width:240px">
-        <select id="filter">
-          <option value="ALL">All Status</option>
-          <option value="IN_PRINT">In-Print</option>
-          <option value="READY">Ready To Pack</option>
-          <option value="PACKED">Packed</option>
-          <option value="DONE">Completed</option>
-        </select>
-      </div>
-    </div>
+  <input id="orderId" placeholder="Order ID (Example: TEST1)" />
+  <input id="pack" placeholder="Pack (Example: Tray Box)" />
+  <input id="product" placeholder="Product Name" />
+  <input id="qty" type="number" placeholder="Quantity" />
+  <input id="due" type="date" />
 
-    <table>
-      <thead>
-        <tr>
-          <th style="width:140px">Order ID</th>
-          <th style="width:140px">Pack</th>
-          <th>Product</th>
-          <th style="width:90px">Qty</th>
-          <th style="width:140px">Due</th>
-          <th style="width:160px">Status</th>
-          <th class="right" style="width:240px">Action</th>
-        </tr>
-      </thead>
-      <tbody id="tbody"></tbody>
-    </table>
-  </div>
-</div>
+  <select id="status">
+    <option value="IN_PRINT">In Print</option>
+    <option value="READY">Ready</option>
+    <option value="COMPLETED">Completed</option>
+  </select>
 
-<script type="module">
-  // Firebase (CDN)
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-  import {
-    getFirestore, doc, setDoc, deleteDoc, onSnapshot, collection
-  } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-  import {
-    getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged
-  } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+  <button onclick="addOrder()">Add / Update Order</button>
 
-  // ✅ YOUR CONFIG (same project)
-  const firebaseConfig = {
-    apiKey: "AIzaSyBcTwfcZRKs-9z-NyBmwOPaXRAnQM_nh8o",
-    authDomain: "mizxart-orders.firebaseapp.com",
-    projectId: "mizxart-orders",
-    storageBucket: "mizxart-orders.firebasestorage.app",
-    messagingSenderId: "1078338622603",
-    appId: "1:1078338622603:web:80a38dc732637aaebcb08e"
-  };
+  <h2>Orders List</h2>
 
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
-  const auth = getAuth(app);
-
-  const ADMIN_EMAIL = "iamtarmizikadir@gmail.com";
-
-  const els = {
-    email: document.getElementById("email"),
-    password: document.getElementById("password"),
-    btnLogin: document.getElementById("btnLogin"),
-    btnLogout: document.getElementById("btnLogout"),
-    authState: document.getElementById("authState"),
-
-    orderId: document.getElementById("orderId"),
-    pack: document.getElementById("pack"),
-    product: document.getElementById("product"),
-    qty: document.getElementById("qty"),
-    due: document.getElementById("due"),
-    status: document.getElementById("status"),
-    btnSave: document.getElementById("btnSave"),
-    btnClear: document.getElementById("btnClear"),
-
-    tbody: document.getElementById("tbody"),
-    search: document.getElementById("search"),
-    filter: document.getElementById("filter"),
-  };
-
-  let allOrders = []; // {id, ...data}
-
-  function badgeClass(status){
-    if(status==="IN_PRINT") return "b-purple";
-    if(status==="READY") return "b-amber";
-    if(status==="PACKED" || status==="DONE") return "b-green";
-    return "b-purple";
-  }
-
-  const statusLabel = {
-    IN_PRINT:"In-Print",
-    READY:"Ready To Pack",
-    PACKED:"Packed",
-    DONE:"Completed"
-  };
-
-  function isAdminUser(user){
-    return user && user.email === ADMIN_EMAIL;
-  }
-
-  function setUiByAuth(user){
-    if(!user){
-      els.authState.textContent = "Not logged in";
-      els.authState.classList.add("muted");
-      els.btnLogout.style.display = "none";
-      return;
-    }
-    els.authState.textContent = `Logged in: ${user.email}`;
-    els.btnLogout.style.display = "inline-block";
-  }
-
-  // AUTH
-  els.btnLogin.addEventListener("click", async ()=>{
-    try{
-      await signInWithEmailAndPassword(auth, els.email.value.trim(), els.password.value);
-    }catch(e){
-      alert("Login failed: " + (e?.message || e));
-    }
-  });
-
-  els.btnLogout.addEventListener("click", async ()=>{
-    await signOut(auth);
-  });
-
-  onAuthStateChanged(auth, (user)=>{
-    setUiByAuth(user);
-  });
-
-  // SAVE / UPDATE (DocID = Order ID)
-  els.btnSave.addEventListener("click", async ()=>{
-    const user = auth.currentUser;
-    if(!isAdminUser(user)) return alert("Admin sahaja boleh add/update. Sila login email admin.");
-
-    const id = els.orderId.value.trim();
-    const pack = els.pack.value.trim();
-    const product = els.product.value.trim();
-    const qty = Number(els.qty.value);
-    const due = els.due.value;
-    const status = els.status.value;
-
-    if(!id) return alert("Order ID wajib isi");
-    if(!product) return alert("Product wajib isi");
-    if(!qty || qty<=0) return alert("Qty mesti > 0");
-    if(!due) return alert("Due date wajib isi");
-
-    try{
-      await setDoc(doc(db, "orders", id), {
-        id, pack, product, qty, due, status,
-        updatedAt: new Date().toISOString()
-      }, { merge: true });
-
-      // auto copy link
-      const link = `${location.origin}${location.pathname.replace("index.html","")}track.html?id=${encodeURIComponent(id)}`;
-      navigator.clipboard?.writeText(link).catch(()=>{});
-      alert("Saved ✅ (Link copied if browser allow):\n" + link);
-
-      clearForm();
-    }catch(e){
-      console.error(e);
-      alert("Add error. Check Firestore Rules / Console.\n" + (e?.message || e));
-    }
-  });
-
-  function clearForm(){
-    els.orderId.value = "";
-    els.pack.value = "Tray Box";
-    els.product.value = "";
-    els.qty.value = "";
-    els.due.value = "";
-    els.status.value = "IN_PRINT";
-  }
-  els.btnClear.addEventListener("click", clearForm);
-
-  // DELETE
-  async function removeOrder(id){
-    const user = auth.currentUser;
-    if(!isAdminUser(user)) return alert("Admin sahaja boleh delete. Sila login email admin.");
-
-    if(!confirm(`Delete order ${id}?`)) return;
-    try{
-      await deleteDoc(doc(db, "orders", id));
-      alert("Deleted ✅");
-    }catch(e){
-      console.error(e);
-      alert("Delete error. Check Rules.\n" + (e?.message || e));
-    }
-  }
-
-  // REALTIME LIST
-  onSnapshot(collection(db, "orders"), (snap)=>{
-    allOrders = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    render();
-  }, (err)=>{
-    console.error(err);
-    alert("Load error. Check Firestore Rules / Console.\n" + (err?.message || err));
-  });
-
-  function render(){
-    const q = els.search.value.toLowerCase().trim();
-    const f = els.filter.value;
-
-    const list = allOrders
-      .filter(o=>{
-        const matchQ =
-          String(o.id||"").toLowerCase().includes(q) ||
-          String(o.product||"").toLowerCase().includes(q) ||
-          String(o.pack||"").toLowerCase().includes(q);
-        const matchF = (f==="ALL") ? true : o.status===f;
-        return matchQ && matchF;
-      })
-      // sort by due date (optional)
-      .sort((a,b)=> String(a.due||"").localeCompare(String(b.due||"")));
-
-    els.tbody.innerHTML = list.map(o=>`
+  <table>
+    <thead>
       <tr>
-        <td><b>${escapeHtml(o.id||"")}</b></td>
-        <td>${escapeHtml(o.pack||"")}</td>
-        <td>${escapeHtml(o.product||"")}</td>
-        <td>${Number(o.qty||0).toLocaleString()}</td>
-        <td>${escapeHtml(o.due||"")}</td>
-        <td><span class="badge ${badgeClass(o.status)}">${statusLabel[o.status] || o.status}</span></td>
-        <td class="right">
-          <div class="stack">
-            <button class="btn-primary" data-act="prefill" data-id="${escapeAttr(o.id)}">Edit</button>
-            <button class="btn-danger" data-act="del" data-id="${escapeAttr(o.id)}">Delete</button>
-            <a class="link small" target="_blank" href="./track.html?id=${encodeURIComponent(o.id)}">Track link</a>
-          </div>
-        </td>
+        <th>ID</th>
+        <th>Pack</th>
+        <th>Product</th>
+        <th>Qty</th>
+        <th>Due</th>
+        <th>Status</th>
+        <th>Action</th>
       </tr>
-    `).join("");
-  }
+    </thead>
 
-  function escapeHtml(str){
-    return String(str)
-      .replaceAll("&","&amp;").replaceAll("<","&lt;")
-      .replaceAll(">","&gt;").replaceAll('"',"&quot;")
-      .replaceAll("'","&#039;");
-  }
-  function escapeAttr(str){ return escapeHtml(str).replaceAll('"',"&quot;"); }
+    <tbody id="ordersTable"></tbody>
+  </table>
 
-  els.search.addEventListener("input", render);
-  els.filter.addEventListener("change", render);
+  <!-- FIREBASE FULL SETUP -->
+  <script type="module">
+    // ===============================
+    // 🔥 FIREBASE IMPORTS
+    // ===============================
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 
-  // click actions table
-  els.tbody.addEventListener("click", (e)=>{
-    const btn = e.target.closest("button");
-    if(!btn) return;
-    const id = btn.dataset.id;
-    const act = btn.dataset.act;
-    if(act==="del") removeOrder(id);
-    if(act==="prefill"){
-      const o = allOrders.find(x=>String(x.id)===String(id));
-      if(!o) return;
-      els.orderId.value = o.id || "";
-      els.pack.value = o.pack || "Tray Box";
-      els.product.value = o.product || "";
-      els.qty.value = o.qty || "";
-      els.due.value = o.due || "";
-      els.status.value = o.status || "IN_PRINT";
-      window.scrollTo({top:0,behavior:"smooth"});
-    }
-  });
+    import {
+      getFirestore,
+      doc,
+      setDoc,
+      deleteDoc,
+      onSnapshot,
+      collection
+    } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-</script>
+    import {
+      getAuth,
+      signInWithEmailAndPassword,
+      onAuthStateChanged
+    } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+
+    // ===============================
+    // 🔥 FIREBASE CONFIG
+    // ===============================
+    const firebaseConfig = {
+      apiKey: "AIzaSyBcTwfcZRKs-9z-NyBmwOPaXRAnQM_nh8o",
+      authDomain: "mizxart-orders.firebaseapp.com",
+      projectId: "mizxart-orders",
+      storageBucket: "mizxart-orders.appspot.com",
+      messagingSenderId: "1078338622603",
+      appId: "1:1078338622603:web:80a38dc732637aaebcb08e"
+    };
+
+    // ===============================
+    // 🔥 INIT APP
+    // ===============================
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+
+
+    // ===============================
+    // ✅ ADMIN LOGIN POPUP
+    // ===============================
+    onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        const email = prompt("Admin Email:");
+        const password = prompt("Admin Password:");
+
+        signInWithEmailAndPassword(auth, email, password)
+          .then(() => {
+            alert("Login Success ✅");
+          })
+          .catch((err) => {
+            alert("Login Failed ❌");
+            console.error(err);
+          });
+      }
+    });
+
+
+    // ===============================
+    // ✅ ADD / UPDATE ORDER
+    // ===============================
+    window.addOrder = async function () {
+      try {
+        const id = document.getElementById("orderId").value.trim();
+        const pack = document.getElementById("pack").value;
+        const product = document.getElementById("product").value;
+        const qty = Number(document.getElementById("qty").value);
+        const due = document.getElementById("due").value;
+        const status = document.getElementById("status").value;
+
+        if (!id) return alert("Order ID wajib isi!");
+
+        await setDoc(doc(db, "orders", id), {
+          id,
+          pack,
+          product,
+          qty,
+          due,
+          status
+        });
+
+        alert("Order Saved ✅");
+
+      } catch (err) {
+        alert("Add error. Check Firestore Rules / Console.");
+        console.error(err);
+      }
+    };
+
+
+    // ===============================
+    // ✅ DELETE ORDER
+    // ===============================
+    window.deleteOrder = async function (id) {
+      try {
+        await deleteDoc(doc(db, "orders", id));
+        alert("Order Deleted ✅");
+      } catch (err) {
+        alert("Delete error. Check Firestore Rules / Console.");
+        console.error(err);
+      }
+    };
+
+
+    // ===============================
+    // ✅ LIVE DISPLAY ORDERS
+    // ===============================
+    const table = document.getElementById("ordersTable");
+
+    onSnapshot(collection(db, "orders"), (snapshot) => {
+      table.innerHTML = "";
+
+      snapshot.forEach((docSnap) => {
+        const order = docSnap.data();
+
+        table.innerHTML += `
+          <tr>
+            <td>${order.id}</td>
+            <td>${order.pack}</td>
+            <td>${order.product}</td>
+            <td>${order.qty}</td>
+            <td>${order.due}</td>
+            <td>${order.status}</td>
+            <td>
+              <button class="delete-btn" onclick="deleteOrder('${order.id}')">
+                Delete
+              </button>
+            </td>
+          </tr>
+        `;
+      });
+    });
+
+  </script>
 </body>
 </html>
