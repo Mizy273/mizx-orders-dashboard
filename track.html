@@ -1,103 +1,93 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
   <title>Track Order</title>
-
   <style>
     body {
       font-family: Arial;
-      background: #0b1020;
-      color: white;
-      text-align: center;
-      padding: 40px;
+      background:#0b1020;
+      color:white;
+      text-align:center;
+      padding:50px;
     }
-
     input, button {
-      width: 80%;
-      padding: 14px;
-      margin: 10px;
-      border-radius: 12px;
-      border: none;
-      font-size: 15px;
+      padding:12px;
+      width:250px;
+      border-radius:8px;
+      border:none;
+      margin:8px;
     }
-
     button {
-      background: #7c3aed;
-      color: white;
-      font-weight: bold;
-      cursor: pointer;
+      background:#8b5cf6;
+      color:white;
+      cursor:pointer;
+      font-weight:bold;
     }
-
-    .card {
-      width: 80%;
-      margin: 20px auto;
-      padding: 20px;
-      background: rgba(255,255,255,0.08);
-      border-radius: 15px;
+    #result {
+      margin-top:30px;
+      padding:20px;
+      background:#111a33;
+      border-radius:12px;
+      display:inline-block;
+      min-width:300px;
     }
   </style>
 </head>
-
 <body>
 
-  <h1>Track Your Order</h1>
+<h1>Track Your Order</h1>
 
-  <input id="trackId" placeholder="Enter Order ID (cth: 12345)">
-  <button onclick="trackOrder()">Track Order</button>
+<input id="trackId" placeholder="Enter Order ID">
+<br>
+<button onclick="trackOrder()">Track Order</button>
 
-  <div id="result"></div>
+<div id="result"></div>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import {
-      getFirestore,
-      doc,
-      getDoc
-    } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import {
+    getFirestore,
+    doc,
+    getDoc
+  } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    // Firebase Config
-    const firebaseConfig = {
-      apiKey: "AIzaSyBcTwfcZRKs-9z-NyBmwOPaXRAnQM_nh8o",
-      authDomain: "mizxart-orders.firebaseapp.com",
-      projectId: "mizxart-orders",
-      storageBucket: "mizxart-orders.firebasestorage.app",
-      messagingSenderId: "1078338622603",
-      appId: "1:1078338622603:web:80a38dc732637aaebcb08e"
-    };
+  const firebaseConfig = {
+    apiKey: "AIzaSyBcTwfcZRKs-9z-NyBmwOPaXRAnQM_nh8o",
+    authDomain: "mizxart-orders.firebaseapp.com",
+    projectId: "mizxart-orders",
+    storageBucket: "mizxart-orders.firebasestorage.app",
+    messagingSenderId: "1078338622603",
+    appId: "1:1078338622603:web:80a38dc732637aaebcb08e"
+  };
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
 
-    // TRACK ORDER FUNCTION
-    window.trackOrder = async function () {
+  window.trackOrder = async function () {
+    let id = document.getElementById("trackId").value.trim();
 
-      let orderId = document.getElementById("trackId").value.trim();
-      let result = document.getElementById("result");
+    if (!id) return alert("Enter Order ID!");
 
-      if (!orderId) return alert("Masukkan Order ID!");
+    const ref = doc(db, "orders", id);
+    const snap = await getDoc(ref);
 
-      const ref = doc(db, "orders", orderId);
-      const snap = await getDoc(ref);
+    if (!snap.exists()) {
+      document.getElementById("result").innerHTML =
+        "<p>❌ Order not found.</p>";
+      return;
+    }
 
-      if (!snap.exists()) {
-        result.innerHTML = "<p>❌ Order not found</p>";
-        return;
-      }
+    const o = snap.data();
 
-      const data = snap.data();
-
-      result.innerHTML = `
-        <div class="card">
-          <h2>Order #${data.id}</h2>
-          <p><b>Product:</b> ${data.product}</p>
-          <p><b>Quantity:</b> ${data.qty}</p>
-          <p><b>Status:</b> ${data.status}</p>
-          <p><b>Due Date:</b> ${data.due}</p>
-        </div>
-      `;
-    };
-  </script>
+    document.getElementById("result").innerHTML = `
+      <h2>Order #${o.id}</h2>
+      <p><b>Product:</b> ${o.product}</p>
+      <p><b>Qty:</b> ${o.qty}</p>
+      <p><b>Status:</b> ${o.status}</p>
+      <p><b>Due:</b> ${o.due}</p>
+    `;
+  };
+</script>
 
 </body>
 </html>
