@@ -2,289 +2,620 @@
 <html lang="ms">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Admin Orders Dashboard</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>Mizxart Orders Dashboard (Admin)</title>
 
   <style>
-    body {
-      margin: 0;
-      font-family: Arial;
-      background: #050b1c;
-      color: white;
-      text-align: center;
+    :root{
+      --bg:#0b1020;
+      --card:#111a33;
+      --text:#e6edf7;
+      --muted:#9aa7c2;
+      --border:rgba(255,255,255,.08);
+
+      --purple:#8b5cf6;
+      --purple-bg:rgba(139,92,246,.15);
+
+      --red:#ef4444;
+      --red-bg:rgba(239,68,68,.12);
+
+      --amber:#f59e0b;
+      --amber-bg:rgba(245,158,11,.14);
+
+      --green:#22c55e;
+      --green-bg:rgba(34,197,94,.14);
     }
 
-    h1 {
-      margin-top: 25px;
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:system-ui,Segoe UI,Roboto,Arial;
+      background: radial-gradient(900px 400px at 15% 0%, #182044 0%, var(--bg) 60%);
+      color:var(--text);
     }
 
-    .container {
-      max-width: 900px;
-      margin: auto;
-      padding: 20px;
+    .wrap{max-width:1150px;margin:25px auto;padding:0 18px 40px}
+    h1{margin:0;font-size:20px;font-weight:800}
+    .sub{margin:6px 0 18px;color:var(--muted);font-size:13px}
+
+    input,select,button{
+      border-radius:12px;
+      border:1px solid var(--border);
+      background:rgba(17,26,51,.8);
+      color:var(--text);
+      padding:10px 12px;
+      font-size:13px;
+      outline:none;
     }
 
-    input, select {
-      width: 100%;
-      padding: 12px;
-      margin: 8px 0;
-      border-radius: 10px;
-      border: none;
-      background: #0c1638;
-      color: white;
-      font-size: 14px;
+    button{cursor:pointer;font-weight:750;transition:.15s}
+    button:hover{transform:scale(1.02)}
+    .btn-primary{background:var(--purple-bg);border-color:rgba(139,92,246,.35)}
+    .btn-danger{background:var(--red-bg);border-color:rgba(239,68,68,.35);color:#fecaca}
+    .btn-ghost{background:transparent}
+
+    .topbar{
+      display:flex;justify-content:space-between;align-items:center;
+      flex-wrap:wrap;gap:10px;margin-bottom:14px;
     }
 
-    button {
-      padding: 14px;
-      width: 100%;
-      border: none;
-      border-radius: 12px;
-      background: #7c3aed;
-      color: white;
-      font-size: 15px;
-      font-weight: bold;
-      cursor: pointer;
-      margin-top: 10px;
+    .panel{
+      margin:14px 0 12px;
+      padding:14px;
+      border-radius:18px;
+      border:1px solid var(--border);
+      background:rgba(17,26,51,.55);
     }
 
-    .logout-btn {
-      background: red;
-      margin-top: 15px;
+    .grid{
+      display:grid;
+      grid-template-columns: 1.2fr 1.2fr 1.4fr .8fr 1fr 1fr;
+      gap:10px;
+      align-items:end;
+    }
+    @media (max-width: 980px){
+      .grid{grid-template-columns: 1fr 1fr}
+    }
+    .field{display:flex;flex-direction:column;gap:6px}
+    .label{font-size:12px;color:var(--muted);font-weight:700}
+    .actions-row{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;margin-top:10px}
+
+    table{
+      width:100%;
+      border-collapse:separate;border-spacing:0;
+      background:rgba(17,26,51,.6);
+      border:1px solid var(--border);
+      border-radius:18px;
+      overflow:hidden;
+    }
+    thead th{
+      padding:14px;
+      font-size:12px;
+      color:var(--muted);
+      text-align:left;
+      border-bottom:1px solid var(--border);
+      white-space:nowrap;
+    }
+    tbody td{
+      padding:14px;
+      border-bottom:1px solid var(--border);
+      font-size:13px;
+      vertical-align:middle;
+    }
+    tbody tr:last-child td{border-bottom:none}
+
+    .product{font-weight:750;color:#ff9b4a}
+    .qty{font-weight:800}
+
+    .badge{
+      padding:6px 10px;border-radius:999px;font-size:12px;
+      border:1px solid var(--border);
+      display:inline-flex;align-items:center;gap:6px;
+      white-space:nowrap;
+    }
+    .badge.purple{background:var(--purple-bg);border-color:rgba(139,92,246,.4)}
+    .badge.amber{background:var(--amber-bg);border-color:rgba(245,158,11,.45);color:#fde68a}
+    .badge.green{background:var(--green-bg);border-color:rgba(34,197,94,.45);color:#bbf7d0}
+    .badge.red{background:var(--red-bg);border-color:rgba(239,68,68,.45);color:#fecaca}
+
+    .row-overdue{background:rgba(239,68,68,.06)}
+
+    .stack{
+      display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;align-items:center;
     }
 
-    table {
-      width: 100%;
-      margin-top: 25px;
-      border-collapse: collapse;
-    }
+    .right{text-align:right}
+    .hint{color:var(--muted);font-size:12px;margin-top:10px}
 
-    th, td {
-      padding: 12px;
-      border-bottom: 1px solid rgba(255,255,255,0.1);
+    /* Login card */
+    .loginWrap{max-width:520px;margin:60px auto 0;padding:0 18px}
+    .loginCard{
+      padding:18px;border-radius:18px;border:1px solid var(--border);
+      background:rgba(17,26,51,.55);
     }
-
-    .delete-btn {
-      background: red;
-      padding: 10px 15px;
-      border-radius: 10px;
-      border: none;
-      color: white;
-      cursor: pointer;
+    .loginTitle{font-size:18px;font-weight:900;margin:0 0 10px}
+    .loginRow{display:grid;gap:10px;margin-top:10px}
+    .loginActions{display:flex;gap:10px;justify-content:flex-end;margin-top:12px;flex-wrap:wrap}
+    .smallText{font-size:12px;color:var(--muted)}
+    .pill{
+      display:inline-flex;gap:8px;align-items:center;
+      border:1px solid var(--border);
+      padding:8px 10px;border-radius:999px;
+      background:rgba(10,14,30,.35);
+      font-size:12px;color:var(--muted);
     }
-
-    .hidden {
-      display: none;
-    }
-
-    .card {
-      background: rgba(255,255,255,0.05);
-      padding: 20px;
-      border-radius: 18px;
-      margin-top: 20px;
-    }
+    .link{color:#c4b5fd;text-decoration:none}
+    .link:hover{text-decoration:underline}
   </style>
 </head>
 
 <body>
-  <h1>Admin Orders Dashboard</h1>
 
-  <div class="container">
-
-    <!-- ✅ LOGIN CARD -->
-    <div id="loginCard" class="card">
-      <h2>Admin Login</h2>
-
-      <input id="loginEmail" placeholder="Email" value="iamtarmizikadir@gmail.com"/>
-      <input id="loginPass" type="password" placeholder="Password"/>
-
-      <button onclick="adminLogin()">Login</button>
+<!-- LOGIN (MUNCUL kalau belum login) -->
+<div id="loginSection" class="loginWrap" style="display:none;">
+  <div class="loginCard">
+    <h2 class="loginTitle">Admin Login</h2>
+    <div class="smallText">
+      Login untuk tambah / edit / delete order.<br>
+      Customer tracking guna <b>track.html</b>.
     </div>
 
-    <!-- ✅ DASHBOARD -->
-    <div id="dashboard" class="hidden">
+    <div class="loginRow">
+      <div class="field">
+        <div class="label">Email</div>
+        <input id="loginEmail" type="email" placeholder="admin@email.com" />
+      </div>
+      <div class="field">
+        <div class="label">Password</div>
+        <input id="loginPass" type="password" placeholder="••••••••" />
+      </div>
+    </div>
 
-      <button class="logout-btn" onclick="adminLogout()">Logout</button>
+    <div class="loginActions">
+      <button class="btn-primary" id="btnLogin">Login</button>
+    </div>
 
-      <h2 style="margin-top:30px;">Add / Update Order</h2>
+    <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:space-between">
+      <span class="pill">Status: <span id="authState">checking…</span></span>
+      <a class="link" href="track.html" target="_blank">Buka track.html →</a>
+    </div>
+  </div>
+</div>
 
-      <input id="orderId" placeholder="Order ID (contoh: 12345)" />
-      <input id="pack" placeholder="Pack (Tray Box)" />
-      <input id="product" placeholder="Product" />
-      <input id="qty" type="number" placeholder="Qty" />
-      <input id="due" type="date" />
+<!-- DASHBOARD (MUNCUL lepas login) -->
+<div id="dashboardSection" class="wrap" style="display:none;">
+  <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-end;flex-wrap:wrap">
+    <div>
+      <h1>Orders Dashboard (Admin)</h1>
+      <div class="sub">Masuk order, update status, semua tersimpan dalam Firebase.</div>
+      <div class="pill">Login sebagai: <span id="whoami">-</span></div>
+    </div>
 
-      <select id="status">
-        <option value="IN_PRINT">In Print</option>
-        <option value="READY">Ready To Pack</option>
-        <option value="PACKED">Packed</option>
-        <option value="DONE">Completed</option>
-      </select>
-
-      <button onclick="saveOrder()">Save Order</button>
-
-      <h2 style="margin-top:40px;">Orders List</h2>
-
-      <table>
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Product</th>
-            <th>Qty</th>
-            <th>Status</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody id="ordersTable"></tbody>
-      </table>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+      <a class="link" href="track.html" target="_blank">Track Page (customer)</a>
+      <button class="btn-danger" id="btnLogout">Logout</button>
     </div>
   </div>
 
-  <!-- ✅ FIREBASE SCRIPT -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  <div class="topbar" style="margin-top:14px">
+    <input id="search" placeholder="Search product / ID / pack..." />
+    <select id="filter">
+      <option value="ALL">All Status</option>
+      <option value="IN_PRINT">In-Print</option>
+      <option value="READY">Ready To Pack</option>
+      <option value="PACKED">Packed</option>
+      <option value="DONE">Completed</option>
+    </select>
 
-    import {
-      getFirestore,
-      collection,
-      getDocs,
-      setDoc,
-      deleteDoc,
-      doc
-    } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    <button class="btn-primary" id="btnExport">Export CSV</button>
+  </div>
 
-    import {
-      getAuth,
-      signInWithEmailAndPassword,
-      signOut,
-      onAuthStateChanged
-    } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+  <!-- ADD / UPDATE -->
+  <div class="panel">
+    <h3 style="margin:0 0 10px;font-size:14px">Add / Update Order</h3>
 
-    // Firebase Config
-    const firebaseConfig = {
-      apiKey: "AIzaSyBcTwfcZRKs-9z-NyBmwOPaXRAnQM_nh8o",
-      authDomain: "mizxart-orders.firebaseapp.com",
-      projectId: "mizxart-orders",
-      storageBucket: "mizxart-orders.firebasestorage.app",
-      messagingSenderId: "1078338622603",
-      appId: "1:1078338622603:web:80a38dc732637aaebcb08e"
-    };
+    <div class="grid">
+      <div class="field">
+        <div class="label">Order ID (WAJIB, unique)</div>
+        <input id="newId" placeholder="cth: 12345 atau TEST 1" />
+      </div>
 
-    // Init Firebase
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const auth = getAuth(app);
+      <div class="field">
+        <div class="label">Pack</div>
+        <select id="newPack">
+          <option value="Tray Box">Tray Box</option>
+          <option value="Bottle">Bottle</option>
+          <option value="Sachet">Sachet</option>
+          <option value="Box">Box</option>
+        </select>
+      </div>
 
-    // UI Elements
-    const loginCard = document.getElementById("loginCard");
-    const dashboard = document.getElementById("dashboard");
+      <div class="field">
+        <div class="label">Product</div>
+        <input id="newProduct" placeholder="cth: HMG 7IU" />
+      </div>
 
-    // ============================
-    // ✅ AUTH LISTENER
-    // ============================
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        loginCard.classList.add("hidden");
-        dashboard.classList.remove("hidden");
-        loadOrders();
-      } else {
-        loginCard.classList.remove("hidden");
-        dashboard.classList.add("hidden");
-      }
-    });
+      <div class="field">
+        <div class="label">Qty</div>
+        <input id="newQty" type="number" min="1" step="1" placeholder="cth: 300" />
+      </div>
 
-    // ============================
-    // ✅ ADMIN LOGIN
-    // ============================
-    window.adminLogin = async function () {
-      const email = document.getElementById("loginEmail").value;
-      const pass = document.getElementById("loginPass").value;
+      <div class="field">
+        <div class="label">Due Date</div>
+        <input id="newDue" type="date" />
+      </div>
 
-      try {
-        await signInWithEmailAndPassword(auth, email, pass);
-        alert("Login success!");
-      } catch (err) {
-        alert("Login failed: " + err.message);
-      }
-    };
+      <div class="field">
+        <div class="label">Status</div>
+        <select id="newStatus">
+          <option value="IN_PRINT">In-Print</option>
+          <option value="READY">Ready To Pack</option>
+          <option value="PACKED">Packed</option>
+          <option value="DONE">Completed</option>
+        </select>
+      </div>
+    </div>
 
-    // ============================
-    // ✅ LOGOUT
-    // ============================
-    window.adminLogout = async function () {
-      await signOut(auth);
-      alert("Logged out!");
-    };
+    <div class="actions-row">
+      <button class="btn-ghost" id="btnNewClear">Clear</button>
+      <button class="btn-primary" id="btnAddOrder">Save (Add/Update)</button>
+    </div>
 
-    // ============================
-    // ✅ LOAD ORDERS
-    // ============================
-    async function loadOrders() {
-      const table = document.getElementById("ordersTable");
-      table.innerHTML = "";
+    <div class="hint">
+      Note: Ini guna <b>Order ID sebagai document ID</b>. Kalau sama ID, dia auto jadi UPDATE.
+    </div>
+  </div>
 
-      const snap = await getDocs(collection(db, "orders"));
+  <table>
+    <thead>
+    <tr>
+      <th style="width:140px">Order</th>
+      <th style="width:140px">Pack</th>
+      <th>Product</th>
+      <th style="width:110px">Qty</th>
+      <th style="width:160px">Due Date</th>
+      <th style="width:420px" class="right">Action</th>
+    </tr>
+    </thead>
+    <tbody id="tbody"></tbody>
+  </table>
 
-      snap.forEach((docSnap) => {
-        const o = docSnap.data();
+  <div class="hint">Overdue = Due Date lepas & status bukan Completed.</div>
+</div>
 
-        table.innerHTML += `
-          <tr>
-            <td>${o.id}</td>
-            <td>${o.product}</td>
-            <td>${o.qty}</td>
-            <td>${o.status}</td>
-            <td>
-              <button class="delete-btn" onclick="deleteOrder('${o.id}')">
-                Delete
-              </button>
-            </td>
-          </tr>
-        `;
-      });
+<script type="module">
+  // =========================
+  // Firebase (CDN modules)
+  // =========================
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import {
+    getAuth,
+    onAuthStateChanged,
+    signInWithEmailAndPassword,
+    signOut
+  } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+  import {
+    getFirestore,
+    doc,
+    setDoc,
+    deleteDoc,
+    onSnapshot,
+    collection,
+    query,
+    orderBy
+  } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+  // =========================
+  // CONFIG (dari project kau)
+  // =========================
+  const firebaseConfig = {
+    apiKey: "AIzaSyBcTwfcZRKs-9z-NyBmwOPaXRAnQM_nh8o",
+    authDomain: "mizxart-orders.firebaseapp.com",
+    projectId: "mizxart-orders",
+    storageBucket: "mizxart-orders.firebasestorage.app",
+    messagingSenderId: "1078338622603",
+    appId: "1:1078338622603:web:80a38dc732637aaebcb08e"
+  };
+
+  const ADMIN_EMAIL = "iamtarmizikadir@gmail.com";
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  // =========================
+  // UI refs
+  // =========================
+  const loginSection = document.getElementById("loginSection");
+  const dashboardSection = document.getElementById("dashboardSection");
+  const authState = document.getElementById("authState");
+  const whoami = document.getElementById("whoami");
+
+  const loginEmail = document.getElementById("loginEmail");
+  const loginPass = document.getElementById("loginPass");
+  const btnLogin = document.getElementById("btnLogin");
+  const btnLogout = document.getElementById("btnLogout");
+
+  const searchEl = document.getElementById("search");
+  const filterEl = document.getElementById("filter");
+  const tbody = document.getElementById("tbody");
+
+  const newId = document.getElementById("newId");
+  const newPack = document.getElementById("newPack");
+  const newProduct = document.getElementById("newProduct");
+  const newQty = document.getElementById("newQty");
+  const newDue = document.getElementById("newDue");
+  const newStatus = document.getElementById("newStatus");
+  const btnAddOrder = document.getElementById("btnAddOrder");
+  const btnNewClear = document.getElementById("btnNewClear");
+  const btnExport = document.getElementById("btnExport");
+
+  // =========================
+  // STATUS
+  // =========================
+  const STATUS = { IN_PRINT:"IN_PRINT", READY:"READY", PACKED:"PACKED", DONE:"DONE" };
+  const statusLabel = { IN_PRINT:"In-Print", READY:"Ready To Pack", PACKED:"Packed", DONE:"Completed" };
+
+  function badgeClass(status){
+    if(status==="IN_PRINT") return "purple";
+    if(status==="READY") return "amber";
+    if(status==="PACKED" || status==="DONE") return "green";
+    return "purple";
+  }
+
+  function escapeHtml(str){
+    return String(str ?? "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
+
+  function overdue(order){
+    if(order.status==="DONE") return false;
+    const dueT = new Date(order.due + "T00:00:00").getTime();
+    const nowT = new Date().setHours(0,0,0,0);
+    return dueT < nowT;
+  }
+
+  function clearForm(){
+    newId.value = "";
+    newPack.value = "Tray Box";
+    newProduct.value = "";
+    newQty.value = "";
+    newDue.value = "";
+    newStatus.value = STATUS.IN_PRINT;
+  }
+
+  // =========================
+  // AUTH
+  // =========================
+  btnLogin.addEventListener("click", async ()=>{
+    const email = loginEmail.value.trim();
+    const pass = loginPass.value;
+
+    if(!email || !pass) return alert("Isi email & password dulu.");
+    try{
+      await signInWithEmailAndPassword(auth, email, pass);
+    }catch(err){
+      console.error(err);
+      alert("Login gagal: " + (err?.message || err));
+    }
+  });
+
+  btnLogout?.addEventListener("click", async ()=>{
+    await signOut(auth);
+  });
+
+  let liveUnsub = null;
+  let liveOrders = []; // local cache from Firestore
+
+  onAuthStateChanged(auth, (user)=>{
+    if(!user){
+      authState.textContent = "NOT LOGGED IN";
+      loginSection.style.display = "block";
+      dashboardSection.style.display = "none";
+      whoami.textContent = "-";
+      if(liveUnsub){ liveUnsub(); liveUnsub = null; }
+      return;
     }
 
-    // ============================
-    // ✅ SAVE ORDER
-    // ============================
-    window.saveOrder = async function () {
-      const id = document.getElementById("orderId").value.trim();
-      const pack = document.getElementById("pack").value.trim();
-      const product = document.getElementById("product").value.trim();
-      const qty = Number(document.getElementById("qty").value);
-      const due = document.getElementById("due").value;
-      const status = document.getElementById("status").value;
+    // logged in
+    whoami.textContent = user.email || "(no email)";
+    authState.textContent = "LOGGED IN";
 
-      if (!id || !product || !qty || !due) {
-        alert("Isi semua field dulu bro!");
-        return;
-      }
+    // simple guard: only admin should use dashboard
+    if((user.email || "").toLowerCase() !== ADMIN_EMAIL.toLowerCase()){
+      loginSection.style.display = "block";
+      dashboardSection.style.display = "none";
+      alert("Akaun ini bukan admin. Sila login guna email admin.");
+      signOut(auth);
+      return;
+    }
 
-      await setDoc(doc(db, "orders", id), {
+    loginSection.style.display = "none";
+    dashboardSection.style.display = "block";
+
+    // Start realtime listener
+    startListener();
+  });
+
+  function startListener(){
+    if(liveUnsub) liveUnsub();
+
+    // orderBy doc field id (string) for stable listing
+    const qRef = query(collection(db, "orders"), orderBy("id", "asc"));
+
+    liveUnsub = onSnapshot(qRef, (snap)=>{
+      liveOrders = snap.docs.map(d => ({ _docId: d.id, ...d.data() }));
+      render();
+    }, (err)=>{
+      console.error(err);
+      alert("Load error. Check Firestore Rules / Console.");
+    });
+  }
+
+  // =========================
+  // CRUD
+  // =========================
+  btnAddOrder.addEventListener("click", async ()=>{
+    const id = newId.value.trim();
+    const pack = newPack.value;
+    const product = newProduct.value.trim();
+    const qty = Number(newQty.value);
+    const due = newDue.value;
+    const status = newStatus.value;
+
+    if(!id) return alert("Order ID wajib isi (unique).");
+    if(!product) return alert("Product wajib isi.");
+    if(!qty || qty <= 0) return alert("Qty mesti > 0.");
+    if(!due) return alert("Due date wajib isi.");
+
+    // doc ID = Order ID (senang track)
+    const docRef = doc(db, "orders", id);
+
+    try{
+      await setDoc(docRef, {
         id,
         pack,
         product,
         qty,
         due,
-        status
-      });
+        status,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
 
-      alert("Order saved!");
+      clearForm();
+      // onSnapshot akan refresh list auto
+    }catch(err){
+      console.error(err);
+      alert("Add/Update error. Check Firestore Rules / Console.");
+    }
+  });
 
-      loadOrders();
-    };
+  btnNewClear.addEventListener("click", clearForm);
 
-    // ============================
-    // ✅ DELETE ORDER
-    // ============================
-    window.deleteOrder = async function (id) {
-      if (!confirm("Delete order " + id + "?")) return;
+  async function deleteOrder(docId){
+    if(!confirm("Delete order " + docId + " ?")) return;
+    try{
+      await deleteDoc(doc(db, "orders", docId));
+    }catch(err){
+      console.error(err);
+      alert("Delete error. Check Firestore Rules / Console.");
+    }
+  }
 
-      await deleteDoc(doc(db, "orders", id));
+  async function updateStatus(docId, newStatus){
+    if(!confirm(`Update ${docId} → ${statusLabel[newStatus]} ?`)) return;
+    try{
+      await setDoc(doc(db, "orders", docId), {
+        status: newStatus,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+    }catch(err){
+      console.error(err);
+      alert("Status update error. Check Firestore Rules / Console.");
+    }
+  }
 
-      alert("Order deleted!");
-      loadOrders();
-    };
-  </script>
+  // =========================
+  // RENDER
+  // =========================
+  searchEl.addEventListener("input", render);
+  filterEl.addEventListener("change", render);
+
+  function render(){
+    if(!tbody) return;
+    tbody.innerHTML = "";
+
+    const q = (searchEl.value || "").toLowerCase().trim();
+    const filter = filterEl.value;
+
+    const list = liveOrders.filter(o=>{
+      const matchQ =
+        String(o.id||"").toLowerCase().includes(q) ||
+        String(o.pack||"").toLowerCase().includes(q) ||
+        String(o.product||"").toLowerCase().includes(q);
+
+      const matchS = filter==="ALL" ? true : o.status===filter;
+      return matchQ && matchS;
+    });
+
+    list.forEach(order=>{
+      const tr = document.createElement("tr");
+      if(overdue(order)) tr.classList.add("row-overdue");
+
+      tr.innerHTML = `
+        <td>${escapeHtml(order.id)}</td>
+        <td>${escapeHtml(order.pack)}</td>
+        <td class="product">${escapeHtml(order.product)}</td>
+        <td class="qty">${Number(order.qty||0).toLocaleString()}</td>
+        <td>
+          ${escapeHtml(order.due)}
+          ${overdue(order) ? ` <span class="badge red">Overdue</span>` : ``}
+        </td>
+        <td class="right">
+          <div class="stack">
+            <span class="badge ${badgeClass(order.status)}">${escapeHtml(statusLabel[order.status] || order.status)}</span>
+
+            <select data-action="status" data-id="${escapeHtml(order._docId)}">
+              ${Object.values(STATUS).map(s=>`
+                <option value="${s}" ${s===order.status ? "selected":""}>${statusLabel[s]}</option>
+              `).join("")}
+            </select>
+
+            <button class="btn-danger" data-action="delete" data-id="${escapeHtml(order._docId)}">Delete</button>
+          </div>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  // event delegation (delete / status)
+  tbody.addEventListener("click", (e)=>{
+    const el = e.target;
+    const action = el?.dataset?.action;
+    const id = el?.dataset?.id;
+    if(!action) return;
+
+    if(action === "delete") deleteOrder(id);
+  });
+
+  tbody.addEventListener("change", (e)=>{
+    const el = e.target;
+    const action = el?.dataset?.action;
+    const id = el?.dataset?.id;
+
+    if(action === "status"){
+      updateStatus(id, el.value);
+    }
+  });
+
+  // Export CSV
+  btnExport.addEventListener("click", ()=>{
+    let csv = "ID,Pack,Product,Qty,Due,Status\n";
+    liveOrders.forEach(o=>{
+      const line = [
+        `"${String(o.id||"").replaceAll('"','""')}"`,
+        `"${String(o.pack||"").replaceAll('"','""')}"`,
+        `"${String(o.product||"").replaceAll('"','""')}"`,
+        `${Number(o.qty||0)}`,
+        `"${String(o.due||"")}"`,
+        `"${String(statusLabel[o.status] || o.status)}"`
+      ].join(",");
+      csv += line + "\n";
+    });
+
+    const blob = new Blob([csv], {type:"text/csv"});
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "orders.csv";
+    link.click();
+  });
+</script>
+
 </body>
 </html>
