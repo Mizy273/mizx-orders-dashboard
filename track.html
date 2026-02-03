@@ -1,93 +1,190 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Track Order</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Track Order - Mizxart</title>
+
   <style>
     body {
-      font-family: Arial;
-      background:#0b1020;
-      color:white;
-      text-align:center;
-      padding:50px;
+      margin: 0;
+      font-family: system-ui, Arial, sans-serif;
+      background: radial-gradient(circle at top, #151a3d, #050514);
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
     }
-    input, button {
-      padding:12px;
-      width:250px;
-      border-radius:8px;
-      border:none;
-      margin:8px;
+
+    .container {
+      width: 100%;
+      max-width: 430px;
+      padding: 25px;
+      border-radius: 25px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 0 35px rgba(0, 0, 0, 0.4);
     }
-    button {
-      background:#8b5cf6;
-      color:white;
-      cursor:pointer;
-      font-weight:bold;
+
+    h1 {
+      text-align: center;
+      font-size: 26px;
+      margin-bottom: 5px;
     }
-    #result {
-      margin-top:30px;
-      padding:20px;
-      background:#111a33;
-      border-radius:12px;
-      display:inline-block;
-      min-width:300px;
+
+    p {
+      text-align: center;
+      font-size: 14px;
+      opacity: 0.8;
+      margin-bottom: 25px;
+    }
+
+    /* ✅ Input + Result Box Sama */
+    .input-box,
+    .result-card {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.10);
+      border-radius: 16px;
+      padding: 14px 16px;
+      color: white;
+      font-size: 15px;
+      box-sizing: border-box;
+    }
+
+    .input-box:focus {
+      outline: none;
+      border-color: rgba(140, 90, 255, 0.8);
+    }
+
+    .track-btn {
+      width: 100%;
+      margin-top: 14px;
+      padding: 14px;
+      border: none;
+      border-radius: 16px;
+      background: linear-gradient(90deg, #6f3cff, #9a5bff);
+      font-weight: bold;
+      font-size: 15px;
+      cursor: pointer;
+      color: white;
+      transition: 0.2s;
+    }
+
+    .track-btn:hover {
+      opacity: 0.9;
+      transform: scale(0.99);
+    }
+
+    .result-card {
+      margin-top: 22px;
+      display: none;
+    }
+
+    .result-card h2 {
+      margin: 0 0 10px;
+      font-size: 20px;
+    }
+
+    .row {
+      margin: 6px 0;
+      font-size: 14px;
+      opacity: 0.9;
+    }
+
+    .status-pill {
+      display: inline-block;
+      margin-top: 14px;
+      padding: 7px 14px;
+      border-radius: 20px;
+      background: rgba(140, 90, 255, 0.25);
+      border: 1px solid rgba(140, 90, 255, 0.4);
+      font-size: 13px;
+      font-weight: bold;
     }
   </style>
 </head>
+
 <body>
 
-<h1>Track Your Order</h1>
+  <div class="container">
+    <h1>Track Your Order</h1>
+    <p>Masukkan Order ID untuk semak status order anda.</p>
 
-<input id="trackId" placeholder="Enter Order ID">
-<br>
-<button onclick="trackOrder()">Track Order</button>
+    <!-- ✅ Input Sama Style -->
+    <input
+      id="orderInput"
+      class="input-box"
+      placeholder="Contoh: 12345"
+    />
 
-<div id="result"></div>
+    <button class="track-btn" onclick="trackOrder()">
+      Track Order
+    </button>
 
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-  import {
-    getFirestore,
-    doc,
-    getDoc
-  } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    <!-- ✅ Result Card -->
+    <div id="resultCard" class="result-card">
+      <h2 id="orderTitle"></h2>
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyBcTwfcZRKs-9z-NyBmwOPaXRAnQM_nh8o",
-    authDomain: "mizxart-orders.firebaseapp.com",
-    projectId: "mizxart-orders",
-    storageBucket: "mizxart-orders.firebasestorage.app",
-    messagingSenderId: "1078338622603",
-    appId: "1:1078338622603:web:80a38dc732637aaebcb08e"
-  };
+      <div class="row"><b>Pack:</b> <span id="pack"></span></div>
+      <div class="row"><b>Product:</b> <span id="product"></span></div>
+      <div class="row"><b>Quantity:</b> <span id="qty"></span></div>
+      <div class="row"><b>Due Date:</b> <span id="due"></span></div>
 
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
+      <div class="status-pill" id="status"></div>
+    </div>
+  </div>
 
-  window.trackOrder = async function () {
-    let id = document.getElementById("trackId").value.trim();
+  <script>
+    // ✅ Demo Data (Firebase boleh masuk kemudian)
+    const orders = {
+      "12345": {
+        pack: "Tray Box",
+        product: "012345",
+        qty: 100,
+        due: "2026-02-27",
+        status: "IN_PRINT"
+      },
+      "123456": {
+        pack: "Tray Box",
+        product: "123456",
+        qty: 111,
+        due: "2026-02-06",
+        status: "IN_PRINT"
+      }
+    };
 
-    if (!id) return alert("Enter Order ID!");
+    function trackOrder() {
+      const id = document.getElementById("orderInput").value.trim();
+      const card = document.getElementById("resultCard");
 
-    const ref = doc(db, "orders", id);
-    const snap = await getDoc(ref);
+      if (!id) {
+        alert("Sila masukkan Order ID dulu.");
+        return;
+      }
 
-    if (!snap.exists()) {
-      document.getElementById("result").innerHTML =
-        "<p>❌ Order not found.</p>";
-      return;
+      if (!orders[id]) {
+        alert("Order tidak jumpa dalam database.");
+        card.style.display = "none";
+        return;
+      }
+
+      const order = orders[id];
+
+      document.getElementById("orderTitle").innerText =
+        "Order #" + id;
+
+      document.getElementById("pack").innerText = order.pack;
+      document.getElementById("product").innerText = order.product;
+      document.getElementById("qty").innerText = order.qty;
+      document.getElementById("due").innerText = order.due;
+      document.getElementById("status").innerText =
+        "Status: " + order.status;
+
+      card.style.display = "block";
     }
-
-    const o = snap.data();
-
-    document.getElementById("result").innerHTML = `
-      <h2>Order #${o.id}</h2>
-      <p><b>Product:</b> ${o.product}</p>
-      <p><b>Qty:</b> ${o.qty}</p>
-      <p><b>Status:</b> ${o.status}</p>
-      <p><b>Due:</b> ${o.due}</p>
-    `;
-  };
-</script>
+  </script>
 
 </body>
 </html>
