@@ -1,102 +1,100 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Track Your Order</title>
+  <meta charset="UTF-8">
+  <title>Track Order</title>
 
   <style>
     body {
-      background: #050b1c;
-      color: white;
       font-family: Arial;
+      background: #0b1020;
+      color: white;
       text-align: center;
-      padding: 50px;
+      padding: 40px;
     }
 
-    .card {
-      max-width: 450px;
-      margin: auto;
-      background: rgba(255,255,255,0.05);
-      padding: 25px;
-      border-radius: 20px;
-    }
-
-    input {
-      width: 90%;
-      padding: 12px;
-      border-radius: 10px;
+    input, button {
+      width: 80%;
+      padding: 14px;
+      margin: 10px;
+      border-radius: 12px;
       border: none;
-      margin: 10px 0;
+      font-size: 15px;
     }
 
     button {
-      width: 95%;
-      padding: 14px;
-      border-radius: 12px;
-      background: purple;
+      background: #7c3aed;
       color: white;
-      border: none;
+      font-weight: bold;
       cursor: pointer;
     }
 
-    #result {
-      margin-top: 20px;
-      text-align: left;
-      padding: 15px;
+    .card {
+      width: 80%;
+      margin: 20px auto;
+      padding: 20px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 15px;
     }
   </style>
 </head>
 
 <body>
 
-  <div class="card">
-    <h1>Track Your Order</h1>
+  <h1>Track Your Order</h1>
 
-    <input id="trackId" placeholder="Enter Order ID..." />
-    <button onclick="trackOrder()">Track</button>
+  <input id="trackId" placeholder="Enter Order ID (cth: 12345)">
+  <button onclick="trackOrder()">Track Order</button>
 
-    <div id="result"></div>
-  </div>
+  <div id="result"></div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import {
+      getFirestore,
+      doc,
+      getDoc
+    } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+    // Firebase Config
     const firebaseConfig = {
       apiKey: "AIzaSyBcTwfcZRKs-9z-NyBmwOPaXRAnQM_nh8o",
       authDomain: "mizxart-orders.firebaseapp.com",
-      projectId: "mizxart-orders"
+      projectId: "mizxart-orders",
+      storageBucket: "mizxart-orders.firebasestorage.app",
+      messagingSenderId: "1078338622603",
+      appId: "1:1078338622603:web:80a38dc732637aaebcb08e"
     };
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
+    // TRACK ORDER FUNCTION
     window.trackOrder = async function () {
-      let id = document.getElementById("trackId").value.trim();
+
+      let orderId = document.getElementById("trackId").value.trim();
       let result = document.getElementById("result");
 
-      if (!id) {
-        alert("Enter Order ID!");
-        return;
-      }
+      if (!orderId) return alert("Masukkan Order ID!");
 
-      const snap = await getDoc(doc(db, "orders", id));
+      const ref = doc(db, "orders", orderId);
+      const snap = await getDoc(ref);
 
       if (!snap.exists()) {
         result.innerHTML = "<p>❌ Order not found</p>";
         return;
       }
 
-      let o = snap.data();
+      const data = snap.data();
 
       result.innerHTML = `
-        <h2>Order #${o.id}</h2>
-        <p><b>Pack:</b> ${o.pack}</p>
-        <p><b>Product:</b> ${o.product}</p>
-        <p><b>Qty:</b> ${o.qty}</p>
-        <p><b>Due:</b> ${o.due}</p>
-        <p><b>Status:</b> ${o.status}</p>
+        <div class="card">
+          <h2>Order #${data.id}</h2>
+          <p><b>Product:</b> ${data.product}</p>
+          <p><b>Quantity:</b> ${data.qty}</p>
+          <p><b>Status:</b> ${data.status}</p>
+          <p><b>Due Date:</b> ${data.due}</p>
+        </div>
       `;
     };
   </script>
