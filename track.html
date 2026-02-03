@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Track Order - Mizxartstudio</title>
+
+  <style>
+    body{
+      margin:0;
+      font-family:system-ui,Segoe UI,Roboto,Arial;
+      background:#0b1020;
+      color:#e6edf7;
+      display:flex;
+      justify-content:center;
+      align-items:flex-start;
+      min-height:100vh;
+      padding:40px 16px;
+    }
+
+    .card{
+      width:100%;
+      max-width:520px;
+      background:#111a33;
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:18px;
+      padding:22px;
+      box-shadow:0 0 25px rgba(0,0,0,.35);
+    }
+
+    h2{
+      margin:0 0 6px;
+      font-size:20px;
+    }
+
+    p{
+      margin:0 0 18px;
+      color:#9aa7c2;
+      font-size:13px;
+    }
+
+    input,button{
+      width:100%;
+      padding:12px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.12);
+      background:rgba(17,26,51,.8);
+      color:#fff;
+      font-size:14px;
+      outline:none;
+      margin-bottom:10px;
+    }
+
+    button{
+      cursor:pointer;
+      font-weight:700;
+      background:rgba(139,92,246,.18);
+      border-color:rgba(139,92,246,.4);
+      transition:.15s;
+    }
+    button:hover{
+      transform:scale(1.02);
+    }
+
+    .result{
+      margin-top:18px;
+      padding:14px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.08);
+      background:rgba(255,255,255,.03);
+    }
+
+    .badge{
+      display:inline-block;
+      padding:6px 10px;
+      border-radius:999px;
+      font-size:12px;
+      margin-top:8px;
+      border:1px solid rgba(255,255,255,.12);
+    }
+
+    .IN_PRINT{ background:rgba(139,92,246,.18); }
+    .READY{ background:rgba(245,158,11,.18); }
+    .PACKED{ background:rgba(34,197,94,.18); }
+    .DONE{ background:rgba(34,197,94,.25); }
+
+    .error{
+      color:#fecaca;
+      font-weight:700;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="card">
+    <h2>Track Your Order</h2>
+    <p>Masukkan Order ID untuk check status order anda.</p>
+
+    <input id="orderId" placeholder="Contoh: 71197">
+    <button id="btnTrack">Track Order</button>
+
+    <div id="output"></div>
+  </div>
+
+  <!-- FIREBASE TRACK SCRIPT -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import {
+      getFirestore,
+      collection,
+      getDocs
+    } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    // ✅ Firebase Config Mizxart
+    const firebaseConfig = {
+      apiKey: "AIzaSyBcTwfcZRKs-9z-NyBmwOPaXRAnQM_nh8o",
+      authDomain: "mizxart-orders.firebaseapp.com",
+      projectId: "mizxart-orders",
+      appId: "1:1078338622603:web:80a38dc732637aaebcb08e"
+    };
+
+    // Init Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const output = document.getElementById("output");
+
+    // Track Function
+    async function trackOrder() {
+      const id = document.getElementById("orderId").value.trim();
+
+      if (!id) {
+        output.innerHTML = `<p class="error">⚠️ Sila masukkan Order ID.</p>`;
+        return;
+      }
+
+      output.innerHTML = `<p>Loading...</p>`;
+
+      // Load semua orders dari Firestore
+      const snap = await getDocs(collection(db, "orders"));
+      const order = snap.docs.map(d => d.data())
+        .find(o => String(o.id) === String(id));
+
+      if (!order) {
+        output.innerHTML = `<p class="error">❌ Order ID tidak dijumpai.</p>`;
+        return;
+      }
+
+      output.innerHTML = `
+        <div class="result">
+          <h3>Order #${order.id}</h3>
+          <p><b>Pack:</b> ${order.pack}</p>
+          <p><b>Product:</b> ${order.product}</p>
+          <p><b>Quantity:</b> ${order.qty}</p>
+          <p><b>Due Date:</b> ${order.due}</p>
+
+          <span class="badge ${order.status}">
+            Status: ${order.status}
+          </span>
+        </div>
+      `;
+    }
+
+    // Button click
+    document.getElementById("btnTrack").addEventListener("click", trackOrder);
+  </script>
+</body>
+</html>
+ 
