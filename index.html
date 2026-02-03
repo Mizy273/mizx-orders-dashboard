@@ -4,42 +4,14 @@
   <meta charset="UTF-8" />
   <title>Admin Orders Dashboard</title>
   <style>
-    body {
-      font-family: Arial;
-      background:#0b1020;
-      color:white;
-      text-align:center;
-      padding:30px;
-    }
-    input, select, button {
-      padding:10px;
-      margin:6px;
-      border-radius:8px;
-      border:none;
-      width:250px;
-    }
-    button {
-      cursor:pointer;
-      background:#8b5cf6;
-      color:white;
-      font-weight:bold;
-    }
-    table {
-      margin:auto;
-      margin-top:30px;
-      border-collapse:collapse;
-      width:80%;
-    }
-    td, th {
-      border:1px solid #333;
-      padding:10px;
-    }
-    .danger {
-      background:red;
-      padding:6px 12px;
-      border-radius:6px;
-      cursor:pointer;
-    }
+    body { font-family: Arial; background:#0b1020; color:white; text-align:center; padding:30px; }
+    input, select, button { padding:10px; margin:6px; border-radius:8px; border:none; width:250px; }
+    button { cursor:pointer; background:#8b5cf6; color:white; font-weight:bold; }
+    table { margin:auto; margin-top:30px; border-collapse:collapse; width:90%; }
+    td, th { border:1px solid #333; padding:10px; }
+    tr:hover { background:#111a33; cursor:pointer; }
+    .danger { background:red; padding:6px 12px; border-radius:6px; cursor:pointer; display:inline-block; }
+    .muted { opacity:0.7; font-size:12px; }
   </style>
 </head>
 <body>
@@ -50,15 +22,16 @@
 <input id="email" placeholder="Admin Email" value="iamtarmizikadir@gmail.com"><br>
 <input id="password" placeholder="Password" type="password"><br>
 <button onclick="login()">Login</button>
+<div id="authStatus" class="muted"></div>
 
 <hr><br>
 
-<h2>Add Order</h2>
+<h2>Add / Update Order</h2>
 
 <input id="orderId" placeholder="Order ID (cth: 12345)"><br>
 <input id="pack" placeholder="Pack (Tray Box)"><br>
 <input id="product" placeholder="Product"><br>
-<input id="qty" placeholder="Qty" type="number"><br>
+<input id="qty" placeholder="Qty" type="number" min="1"><br>
 <input id="due" type="date"><br>
 
 <select id="status">
@@ -68,15 +41,21 @@
   <option value="DONE">DONE</option>
 </select><br>
 
-<button onclick="addOrder()">Add / Update Order</button>
+<button onclick="addOrder()">Save Order</button>
+<button onclick="clearForm()" style="background:#334155;">Clear</button>
 
 <h2>Orders List</h2>
+<div class="muted">Tip: klik row untuk auto isi form (edit).</div>
+
 <table>
   <thead>
     <tr>
-      <th>ID</th>
+      <th>DocID</th>
+      <th>Order ID (field)</th>
+      <th>Pack</th>
       <th>Product</th>
       <th>Qty</th>
+      <th>Due</th>
       <th>Status</th>
       <th>Action</th>
     </tr>
@@ -86,20 +65,11 @@
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-
   import {
-    getFirestore,
-    doc,
-    setDoc,
-    deleteDoc,
-    collection,
-    getDocs
+    getFirestore, doc, setDoc, deleteDoc, collection, getDocs
   } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
   import {
-    getAuth,
-    signInWithEmailAndPassword,
-    onAuthStateChanged
+    getAuth, signInWithEmailAndPassword, onAuthStateChanged
   } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
   const firebaseConfig = {
@@ -115,10 +85,12 @@
   const db = getFirestore(app);
   const auth = getAuth(app);
 
+  const $ = (id) => document.getElementById(id);
+
   // ✅ LOGIN
   window.login = async function () {
-    let email = document.getElementById("email").value;
-    let password = document.getElementById("password").value;
+    const email = $("email").value.trim();
+    const password = $("password").value;
 
     try {
       await signInWithEmailAndPassword(auth, email, password);
@@ -128,73 +100,99 @@
     }
   };
 
-  // ✅ ADD ORDER (DocID = OrderID)
+  // ✅ CLEAR FORM
+  window.clearForm = function () {
+    $("orderId").value = "";
+    $("pack").value = "";
+    $("product").value = "";
+    $("qty").value = "";
+    $("due").value = "";
+    $("status").value = "IN_PRINT";
+  };
+
+  // ✅ ADD/UPDATE ORDER (DocID = OrderID)
   window.addOrder = async function () {
-    let id = document.getElementById("orderId").value.trim();
-    let pack = document.getElementById("pack").value.trim();
-    let product = document.getElementById("product").value.trim();
-    let qty = Number(document.getElementById("qty").value);
-    let due = document.getElementById("due").value;
-    let status = document.getElementById("status").value;
+    const id = $("orderId").value.trim();
+    const pack = $("pack").value.trim();
+    const product = $("product").value.trim();
+    const qtyRaw = $("qty").value;
+    const qty = Number(qtyRaw);
+    const due = $("due").value; // yyyy-mm-dd
+    const status = $("status").value;
 
     if (!id) return alert("Order ID wajib isi!");
+    if (!product) return alert("Product wajib isi!");
+    if (!Number.isFinite(qty) || qty <= 0) return alert("Qty mesti nombor > 0!");
 
     try {
+      // Important: docId = id (tak random)
       await setDoc(doc(db, "orders", id), {
-        id,
-        pack,
-        product,
-        qty,
-        due,
-        status
-      });
+        id, pack, product, qty, due, status,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
 
       alert("Order saved! DocID = " + id);
-      loadOrders();
+      await loadOrders();
     } catch (err) {
       alert("Add error: " + err.message);
     }
   };
 
-  // ✅ DELETE ORDER
-  window.deleteOrder = async function (id) {
-    if (!confirm("Delete order " + id + "?")) return;
+  // ✅ DELETE ORDER (guna docId sebenar)
+  window.deleteOrder = async function (docId) {
+    if (!confirm("Delete order doc: " + docId + "?")) return;
 
     try {
-      await deleteDoc(doc(db, "orders", id));
+      await deleteDoc(doc(db, "orders", docId));
       alert("Deleted!");
-      loadOrders();
+      await loadOrders();
     } catch (err) {
       alert("Delete error: " + err.message);
     }
   };
 
-  // ✅ LOAD ORDERS
+  // ✅ LOAD ORDERS (papar docu.id sekali)
   async function loadOrders() {
     const snap = await getDocs(collection(db, "orders"));
     let html = "";
 
     snap.forEach(docu => {
-      let o = docu.data();
+      const o = docu.data();
+      const docId = docu.id;
+
       html += `
-        <tr>
-          <td>${o.id}</td>
-          <td>${o.product}</td>
-          <td>${o.qty}</td>
-          <td>${o.status}</td>
-          <td><span class="danger" onclick="deleteOrder('${o.id}')">Delete</span></td>
+        <tr onclick="window.__fillForm(${encodeURIComponent(JSON.stringify({docId, ...o}))})">
+          <td><b>${docId}</b></td>
+          <td>${o.id ?? ""}</td>
+          <td>${o.pack ?? ""}</td>
+          <td>${o.product ?? ""}</td>
+          <td>${o.qty ?? ""}</td>
+          <td>${o.due ?? ""}</td>
+          <td>${o.status ?? ""}</td>
+          <td><span class="danger" onclick="event.stopPropagation(); deleteOrder('${docId}')">Delete</span></td>
         </tr>
       `;
     });
 
-    document.getElementById("ordersTable").innerHTML = html;
+    $("ordersTable").innerHTML = html || `<tr><td colspan="8">No orders yet</td></tr>`;
   }
 
-  // Auto refresh bila login
+  // Klik row → auto isi form untuk edit
+  window.__fillForm = function(payloadEncoded){
+    const payload = JSON.parse(decodeURIComponent(payloadEncoded));
+    $("orderId").value = payload.docId || payload.id || "";
+    $("pack").value = payload.pack || "";
+    $("product").value = payload.product || "";
+    $("qty").value = payload.qty ?? "";
+    $("due").value = payload.due || "";
+    $("status").value = payload.status || "IN_PRINT";
+  };
+
+  // Auth status
   onAuthStateChanged(auth, user => {
+    $("authStatus").textContent = user ? ("Logged in as: " + user.email) : "Not logged in";
     if (user) loadOrders();
   });
-
 </script>
 </body>
 </html>
