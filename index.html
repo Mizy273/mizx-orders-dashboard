@@ -1,203 +1,192 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Mizxart Orders Dashboard</title>
-
+  <meta charset="UTF-8">
+  <title>Orders Dashboard</title>
   <style>
     body {
       font-family: Arial;
-      background: #050b1c;
+      background: #0b1020;
       color: white;
-      padding: 30px;
       text-align: center;
+      padding: 30px;
     }
 
-    .box {
-      max-width: 600px;
-      margin: auto;
-      background: rgba(255,255,255,0.05);
-      padding: 25px;
-      border-radius: 15px;
-    }
-
-    input, select {
-      width: 90%;
+    input, select, button {
+      width: 80%;
       padding: 12px;
-      margin: 8px 0;
+      margin: 8px;
       border-radius: 10px;
       border: none;
-      outline: none;
+      font-size: 14px;
     }
 
     button {
-      width: 95%;
-      padding: 14px;
-      margin-top: 10px;
-      background: purple;
+      background: #7c3aed;
       color: white;
-      font-size: 16px;
-      border: none;
-      border-radius: 12px;
       cursor: pointer;
+      font-weight: bold;
     }
 
     table {
-      width: 100%;
-      margin-top: 20px;
+      width: 90%;
+      margin: 20px auto;
       border-collapse: collapse;
     }
 
-    td, th {
-      padding: 10px;
+    th, td {
+      padding: 12px;
       border-bottom: 1px solid rgba(255,255,255,0.2);
     }
 
-    .delbtn {
+    .deleteBtn {
       background: red;
-      padding: 8px 12px;
+      padding: 8px 14px;
       border-radius: 8px;
       cursor: pointer;
-      border: none;
       color: white;
+      border: none;
     }
   </style>
 </head>
 
 <body>
 
-  <h1>📦 Mizxart Orders Dashboard</h1>
+  <h1>Orders Dashboard Mizxartstudio</h1>
 
-  <div class="box">
+  <h2>Add / Update Order</h2>
 
-    <h2>Add New Order</h2>
+  <input id="orderId" placeholder="Order ID (cth: 12345)">
+  <input id="product" placeholder="Product (cth: HGH)">
+  <input id="qty" type="number" placeholder="Quantity">
+  <input id="due" type="date">
 
-    <input id="orderId" placeholder="Order ID (contoh: TEST1)" />
-    <input id="pack" placeholder="Pack (Tray Box)" />
-    <input id="product" placeholder="Product Name" />
-    <input id="qty" type="number" placeholder="Quantity" />
-    <input id="due" type="date" />
+  <select id="status">
+    <option value="IN_PRINT">In Print</option>
+    <option value="READY">Ready</option>
+    <option value="PACKED">Packed</option>
+    <option value="DONE">Completed</option>
+  </select>
 
-    <select id="status">
-      <option value="IN_PRINT">In Print</option>
-      <option value="READY">Ready</option>
-      <option value="COMPLETED">Completed</option>
-    </select>
+  <button onclick="addOrder()">➕ Add / Update Order</button>
 
-    <button onclick="addOrder()">➕ Add / Update Order</button>
+  <h2>All Orders</h2>
 
-    <h2 style="margin-top:30px;">Orders List</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Product</th>
+        <th>Qty</th>
+        <th>Status</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody id="ordersTable"></tbody>
+  </table>
 
-    <table>
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Product</th>
-          <th>Qty</th>
-          <th>Status</th>
-          <th>Delete</th>
-        </tr>
-      </thead>
-      <tbody id="ordersTable"></tbody>
-    </table>
-
-  </div>
-
-  <!-- Firebase Full Setup -->
+  <!-- Firebase FULL Setup -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import {
       getFirestore,
       doc,
       setDoc,
+      getDocs,
       deleteDoc,
-      collection,
-      onSnapshot
+      collection
     } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    // 🔥 Firebase Config
+    // ✅ Firebase Config
     const firebaseConfig = {
       apiKey: "AIzaSyBcTwfcZRKs-9z-NyBmwOPaXRAnQM_nh8o",
       authDomain: "mizxart-orders.firebaseapp.com",
       projectId: "mizxart-orders",
-      storageBucket: "mizxart-orders.appspot.com",
+      storageBucket: "mizxart-orders.firebasestorage.app",
       messagingSenderId: "1078338622603",
       appId: "1:1078338622603:web:80a38dc732637aaebcb08e"
     };
 
-    // Init Firebase
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // ✅ Add Order
-    window.addOrder = async function () {
-      let id = document.getElementById("orderId").value.trim();
-      let pack = document.getElementById("pack").value;
-      let product = document.getElementById("product").value;
-      let qty = document.getElementById("qty").value;
-      let due = document.getElementById("due").value;
-      let status = document.getElementById("status").value;
+    // ✅ LOAD ORDERS FUNCTION
+    async function loadOrders() {
+      const table = document.getElementById("ordersTable");
+      table.innerHTML = "";
 
-      if (!id) {
-        alert("Order ID wajib isi!");
-        return;
-      }
+      const snap = await getDocs(collection(db, "orders"));
 
-      try {
-        await setDoc(doc(db, "orders", id), {
-          id,
-          pack,
-          product,
-          qty: Number(qty),
-          due,
-          status
-        });
+      snap.forEach((docSnap) => {
+        const data = docSnap.data();
 
-        alert("✅ Order saved!");
-      } catch (err) {
-        alert("❌ Add error");
-        console.log(err);
-      }
-    };
-
-    // ✅ Delete Order
-    window.deleteOrder = async function (id) {
-      if (!confirm("Delete order " + id + "?")) return;
-
-      try {
-        await deleteDoc(doc(db, "orders", id));
-        alert("🗑️ Deleted!");
-      } catch (err) {
-        alert("❌ Delete error");
-        console.log(err);
-      }
-    };
-
-    // ✅ Auto Load Orders Table
-    const ordersTable = document.getElementById("ordersTable");
-
-    onSnapshot(collection(db, "orders"), (snapshot) => {
-      ordersTable.innerHTML = "";
-
-      snapshot.forEach((docSnap) => {
-        let o = docSnap.data();
-
-        ordersTable.innerHTML += `
+        table.innerHTML += `
           <tr>
-            <td>${o.id}</td>
-            <td>${o.product}</td>
-            <td>${o.qty}</td>
-            <td>${o.status}</td>
+            <td>${data.id}</td>
+            <td>${data.product}</td>
+            <td>${data.qty}</td>
+            <td>${data.status}</td>
             <td>
-              <button class="delbtn" onclick="deleteOrder('${o.id}')">
+              <button class="deleteBtn" onclick="deleteOrder('${data.id}')">
                 Delete
               </button>
             </td>
           </tr>
         `;
       });
-    });
+    }
+
+    // ✅ ADD ORDER (DocID = Order ID)
+    window.addOrder = async function () {
+
+      let id = document.getElementById("orderId").value.trim();
+      let product = document.getElementById("product").value.trim();
+      let qty = Number(document.getElementById("qty").value);
+      let due = document.getElementById("due").value;
+      let status = document.getElementById("status").value;
+
+      if (!id) return alert("Order ID wajib isi!");
+
+      try {
+        await setDoc(doc(db, "orders", id), {
+          id,
+          product,
+          qty,
+          due,
+          status
+        });
+
+        alert("✅ Order saved!");
+
+        document.getElementById("orderId").value = "";
+        document.getElementById("product").value = "";
+        document.getElementById("qty").value = "";
+        document.getElementById("due").value = "";
+
+        loadOrders();
+
+      } catch (err) {
+        console.error(err);
+        alert("Add Error: " + err.message);
+      }
+    };
+
+    // ✅ DELETE ORDER
+    window.deleteOrder = async function (id) {
+      if (!confirm("Delete order " + id + "?")) return;
+
+      try {
+        await deleteDoc(doc(db, "orders", id));
+        alert("✅ Deleted!");
+        loadOrders();
+      } catch (err) {
+        console.error(err);
+        alert("Delete Error: " + err.message);
+      }
+    };
+
+    // FIRST LOAD
+    loadOrders();
   </script>
 
 </body>
